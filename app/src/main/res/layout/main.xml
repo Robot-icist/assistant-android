@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView  xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent">
+<LinearLayout
+    android:id="@+id/layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+
+    <LinearLayout
+        android:id="@+id/spinner1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+    <TextView
+        android:id="@+id/keyword_spinner_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/keyword_spinner"
+        android:layout_alignStart="@+id/keyword_spinner"
+        android:layout_alignLeft="@+id/keyword_spinner"
+        android:text="@string/keyword_label" />
+    <Spinner
+        android:id="@+id/keyword_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:spinnerMode="dialog"
+        style="@android:style/Widget.Holo.Light.Spinner"
+        android:entries="@array/keywords" />
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/spinner2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+    <TextView
+        android:id="@+id/model_spinner_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/keyword_spinner"
+        android:layout_alignStart="@+id/keyword_spinner"
+        android:layout_alignLeft="@+id/keyword_spinner"
+        android:text="@string/model_label" />
+    <Spinner
+        android:id="@+id/model_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginEnd="15dp"
+        android:spinnerMode="dialog"
+        style="@android:style/Widget.Holo.Light.Spinner"
+        android:entries="@array/models" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/ips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/handip" />
+        <EditText
+            android:id="@+id/ip"
+            android:layout_width="0dp"
+            android:layout_weight=".90"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/serverLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/serverip" />
+        <EditText
+            android:id="@+id/server"
+            android:layout_width="0dp"
+            android:layout_weight=".90"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:id="@+id/speakerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_marginVertical="15dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/speakerid" />
+        <NumberPicker
+            android:id="@+id/speaker"
+            android:layout_width="fill_parent"
+            android:layout_height="50dp" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/textlabel" />
+        <EditText
+            android:id="@+id/text"
+            android:layout_width="0dp"
+            android:layout_weight=".90"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/enter"
+            android:text="="
+            android:layout_width="0dp"
+            android:layout_weight=".10"
+            android:layout_height="match_parent"/>
+
+    </LinearLayout>
+    <Button
+        android:id="@+id/recognize_mic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/recognize_microphone" />
+
+    <LinearLayout
+        android:id="@+id/btns"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_train"
+            android:layout_width="90dp"
+            android:layout_height="wrap_content"
+            android:text="@string/train" />
+        <Button
+            android:id="@+id/reload"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reload" />
+        <Button
+            android:id="@+id/stop"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/stop" />
+    </LinearLayout>
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_marginHorizontal="5dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_horizontal"
+        android:progressTint="@color/colorPrimaryDark"
+        android:visibility="gone" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/enrollCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enroll"/>
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/bluetoothCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+        android:layout_marginHorizontal="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bluetooth"/>
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/localCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/local"/>
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/videoCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/video"/>
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/googleCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/google"/>
+    </LinearLayout>
+
+    <TextureView
+        android:visibility="gone"
+        android:id="@+id/texture"
+        android:layout_width="200dp"
+        android:layout_height="250dp"
+        android:layout_above="@+id/btn_takepicture"
+        android:layout_alignParentTop="true"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:visibility="gone"
+            android:id="@+id/btn_test"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/test" />
+        <Button
+            android:visibility="gone"
+            android:id="@+id/btn_enroll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/enroll" />
+        <EditText
+            android:visibility="gone"
+            android:id="@+id/enrollName"
+            android:text="@string/enrollName"
+            android:layout_width="200dp"
+            android:layout_height="50dp"/>
+        </LinearLayout>
+
+    <TextView
+        android:id="@+id/result_text"
+        android:layout_width="fill_parent"
+        android:layout_height="200dp"
+        android:gravity="bottom"
+        android:scrollbars="vertical"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+</LinearLayout>
+</ScrollView>

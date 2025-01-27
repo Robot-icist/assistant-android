@@ -1,0 +1,16 @@
+<!-- res/xml/shortcuts.xml -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="open_custom_assistant"
+        android:enabled="true">
+
+        <!-- L’URI de la deep link correspond à celle définie dans l’intent-filter -->
+        <intent
+            android:action="android.intent.action.MAIN"
+            android:data="customassistant://open" />
+
+        <!-- Capability to hint at Assistant use -->
+        <capability
+            android:name="actions.intent.OPEN_APP_FEATURE" />
+    </shortcut>
+</shortcuts>

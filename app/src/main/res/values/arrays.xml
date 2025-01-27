@@ -1,0 +1,7 @@
+<!-- res/values/arrays.xml -->
+<resources>
+    <string-array name="open_assistant_patterns">
+        <item>ouvre custom assistant</item>
+        <item>lance custom assistant</item>
+    </string-array>
+</resources>

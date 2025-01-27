@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Custom Assistant</string>
+    <string name="recognize_file">Recognize File</string>
+    <string name="recognize_microphone"> \u00AE Recognize Microphone</string>
+    <string name="stop_microphone">Stop Microphone</string>
+    <string name="preparing">Preparing the recognizer\n</string>
+    <string name="ready">Ready\n</string>
+    <string name="failed">Failed to init recognizer %s\n</string>
+    <string name="elapsed">Result %s elapsed %d milliseconds\n</string>
+    <string name="starting">Starting\n</string>
+    <string name="say_something">Say something\n</string>
+    <string name="logo">Logo</string>
+    <string name="enroll">Enroll</string>
+    <string name="bluetooth">BT</string>
+    <string name="test">Test</string>
+    <string name="enrollName">EnrollName</string>
+    <string-array name="keywords">
+        <item>Americano</item>
+        <item>Alexa</item>
+        <item>Blueberry</item>
+        <item>Bumblebee</item>
+        <item>Computer</item>
+        <item>Grapefruit</item>
+        <item>Grasshopper</item>
+        <item>Hey_Google</item>
+        <item>Hey_Siri</item>
+        <item>Jarvis</item>
+        <item>Ok_Google</item>
+        <item>Picovoice</item>
+        <item>Porcupine</item>
+        <item>Terminator</item>
+    </string-array>
+    <string name="keyword_label">Keyword</string>
+    <string-array name="models">
+        <item>EN</item>
+        <item>FR</item>
+    </string-array>
+    <string name="model_label">Models</string>
+    <string name="reload"> \u27F3 Reload</string>
+    <string name="stop"> \u0496 Stop</string>
+    <string name="train"> \u0488 Train</string>
+    <string name="local">Local</string>
+    <string name="video">Video</string>
+    <string name="google">Google</string>
+    <string name="handip">Hand IP</string>
+    <string name="serverip">Server IP</string>
+    <string name="speakerid">Speaker ID</string>
+    <string name="textlabel">Text</string>
+
+</resources>

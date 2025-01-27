@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="btnClose" type="id" />
+    <item name="edt1" type="id" />
+    <item name="tvValue" type="id" />
+    <item name="imageView" type="id" />
+    <item name="keyword_spinner" type="id" />
+    <item name="keyword_spinner_label" type="id" />
+    <item name="model_spinner" type="id" />
+    <item name="model_spinner_label" type="id" />
+    <item name="reload" type="id" />
+    <item name="stop" type="id" />
+    <item name="texture" type="id" />
+    <item name="btn_enroll" type="id" />
+    <item name="btn_test" type="id" />
+    <item name="btn_train" type="id" />
+    <item name="enrollName" type="id" />
+    <item name="enrollCb" type="id"/>
+    <item name="bluetoothCb" type="id"/>
+    <item name="localCb" type="id"/>
+    <item name="videoCb" type="id"/>
+    <item name="googleCb" type="id"/>
+    <item name="loader" type="id"/>
+    <item name="ips" type="id"/>
+    <item name="ip" type="id"/>
+    <item name="plus" type="id"/>
+    <item name="btns" type="id"/>
+    <item name="text" type="id"/>
+    <item name="server" type="id"/>
+    <item name="speaker" type="id"/>
+    <item name="serverLayout" type="id"/>
+    <item name="speakerLayout" type="id"/>
+</resources>
