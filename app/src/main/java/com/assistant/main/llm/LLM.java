@@ -31,6 +31,7 @@ public class LLM {
                 .setResultListener((partialResult, done) -> {
                     Pair<String, Boolean> result = new Pair<>(partialResult, done);
                     propertyChangeSupport.firePropertyChange("partialResult", null, result);
+                    propertyChangeSupport.firePropertyChange("partialResultMain", null, result);
                     if(listener != null){
                         listener.run(partialResult, done);
                     }

@@ -321,8 +321,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     setPreferenceI("google", isChecked ? 1 : 0);
-                    if(Tasks.globalWebSocket != null)
-                        Tasks.globalWebSocket.send("google:"+ (isChecked ? 1 : 0));
+                    /*if(Tasks.globalWebSocket != null)
+                        Tasks.globalWebSocket.send("google:"+ (isChecked ? 1 : 0)); */
                 }
             });
             assert takePictureButton != null;
@@ -361,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 public void onClick(View v) {
                     try {
                         Tasks.ActionTask.Task.doInBackground(text.getText().toString());
-                        resultView.append(text.getText().toString()+"\n");
+                        resultView.append("\nuser:\n"+text.getText().toString()+"\n");
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -442,12 +442,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
     public OutputHandler.ProgressListener progressListener = ((partialResult, done) -> {
-        resultView.append(partialResult.toString());
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                resultView.append(partialResult.toString());
+            }
+        });
     });
     public PropertyChangeListener listener = evt -> {
-        Pair<String, Boolean> result = (Pair<String, Boolean>) evt.getNewValue();
-        String partialText = result.first;
-        resultView.append(partialText+"\n");
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Pair<String, Boolean> result = (Pair<String, Boolean>) evt.getNewValue();
+                String partialText = result.first;
+                resultView.append(partialText);
+            }
+        });
+
+
     };
     ///CAMERA PART
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
@@ -766,6 +778,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             int tempSetBluetooth = getPreferenceI("SetBluetooth");
             int tempSetLocal = getPreferenceI("local");
             int tempSetVideo = getPreferenceI("video");
+            int tempSetGoogle = getPreferenceI("google");
             String tempKeywordS = getPreferenceS("KeywordFileName");
             String tempModelS = getPreferenceS("ModelFileName");
             handleSpinners();
@@ -777,12 +790,14 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             bluetoothCb.setChecked(tempSetBluetooth == 1);
             localCb.setChecked(tempSetLocal == 1);
             videoCb.setChecked(tempSetVideo == 1);
+            googleCb.setChecked(tempSetGoogle == 1);
             setPreferenceI("KeywordFilePosition", tempKeyword);
             setPreferenceI("ModelFilePosition", tempModel);
             setPreferenceI("enroll", tempSetEnroll);
             setPreferenceI("SetBluetooth", tempSetBluetooth);
             setPreferenceI("local", tempSetLocal);
             setPreferenceI("video", tempSetVideo);
+            setPreferenceI("google", tempSetGoogle);
             setPreferenceS("KeywordFileName", tempKeywordS);
             setPreferenceS("ModelFileName", tempModelS);
             // Recognizer initialization is a time-consuming and it involves IO,
@@ -792,8 +807,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
             new android.os.Handler().postDelayed(
                     () -> {
-                        if(Tasks.ActionTask.propertyChangeSupport != null)
-                            Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener(listener);
+                        if(Tasks.ActionTask.propertyChangeSupport != null){
+                            PropertyChangeListener[] listeners = Tasks.ActionTask.propertyChangeSupport.getPropertyChangeListeners("partialResult");
+                            for (PropertyChangeListener l : listeners) {
+                                Tasks.ActionTask.propertyChangeSupport.removePropertyChangeListener("partialResult", l);
+                            }
+                            Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener("partialResult", listener);
+                        }
                     },
                     2000);
 
@@ -1044,8 +1064,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 setPreferenceI("ModelFilePosition", position);
                 setPreferenceS("ModelFileName", ModelFileName);
 
-                if(Tasks.globalWebSocket != null)
+                /*if(Tasks.globalWebSocket != null)
                     Tasks.globalWebSocket.send("lang:"+ModelSpinner.getSelectedItem().toString().toLowerCase());
+                */
                 //stopService(AssistantService.class);
                 //startAssistantService(KeywordFileName, ModelFileName);
             }

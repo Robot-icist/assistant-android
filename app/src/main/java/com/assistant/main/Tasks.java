@@ -127,7 +127,7 @@ public class Tasks {
                 } catch (IOException e) {
                     Log.e("SetupTask", "face cascade not found");
                 }
-                new Tasks.ActionTask(serviceReference.get()).execute(" ");
+                new Tasks.ActionTask(serviceReference.get()).execute("");
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
@@ -325,14 +325,7 @@ public class Tasks {
             Log.d(TAG, "Attempting to reconnect in 2 seconds...");
             serviceReference.get().sendNotification("Websocket", "Reconnecting");
 
-            try {
-                Log.d(TAG, "Reconnecting to WebSocket...");
-                connectToWebSocket(serviceReference);
-            }catch(Exception e){
-                e.printStackTrace();
-                scheduleReconnect(serviceReference);
-            }
-            /*AsyncServer.getDefault().postDelayed(() -> {
+            AsyncServer.getDefault().postDelayed(() -> {
                 try {
                     Log.d(TAG, "Reconnecting to WebSocket...");
                     connectToWebSocket(serviceReference);
@@ -349,24 +342,28 @@ public class Tasks {
 
     }
 
-    public static void SendPreferencesJson(Context context){
-        Integer speaker = getPreferenceI(context, "speaker");
-        Integer video = getPreferenceI(context, "video");
-        String[] model = getPreferenceS(context, "ModelFileName").split("-");
-        String lang = model[model.length-1];
-        Integer google = getPreferenceI(context, "google");
-        JSONObject jobj = new JSONObject();
-        try {
-            jobj.accumulate("ip", ipv4);
-            jobj.accumulate("speaker", speaker);
-            jobj.accumulate("video", video);
-            jobj.accumulate("lang", lang);
-            jobj.accumulate("google", google);
-            String json = jobj.toString();
-            globalWebSocket.send(json);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public static void SendPreferencesJson(Context context, String... text){
+        GetIp(() -> {
+            Integer speaker = getPreferenceI(context, "speaker");
+            Integer video = getPreferenceI(context, "video");
+            String[] model = getPreferenceS(context, "ModelFileName").split("-");
+            String lang = model[model.length-1];
+            Integer google = getPreferenceI(context, "google");
+            JSONObject jobj = new JSONObject();
+            try {
+                jobj.accumulate("ip", ipv4);
+                jobj.accumulate("speaker", speaker);
+                jobj.accumulate("video", video);
+                jobj.accumulate("lang", lang);
+                jobj.accumulate("google", google);
+                jobj.accumulate("text", text.length > 0 ? text[0] : "");
+                String json = jobj.toString();
+                if(globalWebSocket != null)
+                    globalWebSocket.send(json);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
     public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
         try {
@@ -402,30 +399,7 @@ public class Tasks {
 
                     //webSocket.send(new byte[10]);
 
-                    /*Integer speaker = getPreferenceI(serviceReference.get().getContext(), "speaker");
-                    Integer video = getPreferenceI(serviceReference.get().getContext(), "video");
-                    String[] model = getPreferenceS(serviceReference.get().getContext(), "ModelFileName").split("-");
-                    String lang = model[model.length-1];
-                    Integer google = getPreferenceI(serviceReference.get().getContext(), "google");
-
-                    JSONObject jobj = new JSONObject();
-                    try {
-                        jobj.accumulate("ip", ipv4);
-                        jobj.accumulate("speaker", speaker);
-                        jobj.accumulate("video", video);
-                        jobj.accumulate("lang", lang);
-                        jobj.accumulate("google", google);
-                        String json = jobj.toString();
-                        globalWebSocket.send(json);
-                    } catch (JSONException e) {
-                        throw new RuntimeException(e);
-                    }
-                    globalWebSocket.send("ip:"+ipv4);
-                    globalWebSocket.send("speaker:"+speaker);
-                    globalWebSocket.send("video:"+video);
-                    globalWebSocket.send("lang:"+lang);
-                    globalWebSocket.send("google:"+google);
-*/
+                    GetIp();
                     SendPreferencesJson(serviceReference.get().getContext());
 
                     webSocket.setStringCallback(new WebSocket.StringCallback() {
@@ -510,15 +484,22 @@ public class Tasks {
         });
     }
 
-    public static void GetIp(){
-        String url = "https://api.ipify.org/?format=json";  // Example URL
+    public static void GetIp(Runnable... runnable){
+        String url = "https://api.ipify.org/?format=json";
 
         HttpRequestHelper.sendHttpGetRequest(url, new HttpRequestHelper.HttpResponseCallback() {
             @Override
             public void onResponse(String result) throws JSONException {
                 // Handle the successful response
-                System.out.println("Response: " + result);
-                ipv4 = new JSONObject(result).getString("ip");
+                try {
+                    System.out.println("Response: " + result);
+                    ipv4 = new JSONObject(result).getString("ip");
+                    if(runnable.length > 0)
+                        runnable[0].run();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
             }
 
             @Override
@@ -598,24 +579,7 @@ public class Tasks {
                     connectToWebSocket(serviceReference);
 
                 imagePopup = new ImagePopup(serviceReference.get().getContext());
-
-                String url = "https://api.ipify.org/?format=json";  // Example URL
-
-                HttpRequestHelper.sendHttpGetRequest(url, new HttpRequestHelper.HttpResponseCallback() {
-                    @Override
-                    public void onResponse(String result) throws JSONException {
-                        // Handle the successful response
-                        System.out.println("Response: " + result);
-                        ipv4 = new JSONObject(result).getString("ip");
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        // Handle the error response
-                        System.out.println("Error: " + error);
-                    }
-                });
-
+                GetIp();
                 Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
                     public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
@@ -757,21 +721,18 @@ public class Tasks {
                 text = text.toLowerCase();
                 Log.i("ActionTask", "data: " + text);
 
-
                /* if (text.toLowerCase(Locale.ROOT).contains("laura")) {
                     serviceReference.get().tts.speak("Bonjour Laura, je m'appel "+serviceReference.get().keyword+ "et je suis fou amoureux de toi, tu es la plus belle femme du monde, voudrais tu devenir ma femme ?", TextToSpeech.QUEUE_ADD, null, String.valueOf(1));
                 }else */
-                serviceReference.get().sendNotification("Recognized", text);
-                if (" ".equals(text)) {
-                        //serviceReference.get().tts.speak("Hello Boss !"+serviceReference.get().keyword, TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
-                        serviceReference.get().tts.speak("Hello Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
-                }
-                else if(local == 0){
+                if(!text.isEmpty())
+                    serviceReference.get().sendNotification("Recognized", text);
+
+                if(local == 0 && !text.isEmpty()){
 
                     if (text.contains("see") || text.contains("vois")) {
                         Camera cam = new Camera(serviceReference.get());
                         cam.startBackgroundThread();
-                        cam.openCamera(0);
+                        cam.openCamera(text.contains("front") || text.contains("devant") ? 1 : 0);
                         new android.os.Handler().postDelayed(
                                 () -> {
                                     String picturePath = cam.takePicture(serviceReference);
@@ -781,12 +742,8 @@ public class Tasks {
                                                     byte[] byteArray = FileUtils.getFileBytes(picturePath);
                                                     imagePopup.showImagePopup(byteArray);
                                                     //String base64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                                                    Integer video = getPreferenceI(serviceReference.get().getContext(), "video");
-                                                    Integer speaker = getPreferenceI(serviceReference.get().getContext(), "speaker");
-
+                                                    SendPreferencesJson(serviceReference.get().getContext());
                                                     if(globalWebSocket != null){
-                                                        globalWebSocket.send("video:"+video);
-                                                        globalWebSocket.send("speaker:"+speaker);
                                                         globalWebSocket.send(ImageUtils.resizeAndCompressImage(byteArray,50));
                                                     }
                                                 } catch (Exception e) {
@@ -799,13 +756,12 @@ public class Tasks {
 
                     }
                     else{
-                        Integer video = getPreferenceI(serviceReference.get().getContext(), "video");
-                        Integer speaker = getPreferenceI(serviceReference.get().getContext(), "speaker");
-                        globalWebSocket.send("video:"+video);
-                        globalWebSocket.send("speaker:"+speaker);
-                        globalWebSocket.send("text:"+text);
+                        SendPreferencesJson(serviceReference.get().getContext(), text);
                     }
 
+                }else if (text.isEmpty()) {
+                        //serviceReference.get().tts.speak("Hello Boss !"+serviceReference.get().keyword, TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
+                        serviceReference.get().tts.speak("Hello Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                 }
                 else if (text.contains("hand") || text.contains("main") || text.contains("robot")) {
                     String txt = text.contains("open") || text.contains("clos") || text.contains("ouvr") || text.contains("ferm") ? "value:1" : "mode:" + replaceAny(text, new ArrayList<String>() {

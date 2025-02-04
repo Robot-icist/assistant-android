@@ -262,7 +262,7 @@
     <TextView
         android:id="@+id/result_text"
         android:layout_width="fill_parent"
-        android:layout_height="200dp"
+        android:layout_height="220dp"
         android:gravity="bottom"
         android:scrollbars="vertical"
         android:textAppearance="?android:attr/textAppearanceMedium" />

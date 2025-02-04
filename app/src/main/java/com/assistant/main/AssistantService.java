@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -13,7 +14,9 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
@@ -229,6 +232,19 @@ public class AssistantService extends android.app.Service implements Recognition
 
                 tts.speak("", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
 
+                Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                    @Override
+                    public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
+                        try {
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                Toast(paramThrowable.toString());
+                            });
+                            Thread.yield();
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    }
+                });
             } catch (PorcupineManagerException e) {
                 Log.e("ASSISTANT_SERVICE", e.toString());
             }catch (Exception e){
@@ -239,7 +255,7 @@ public class AssistantService extends android.app.Service implements Recognition
         }catch (Exception e){
             Log.e("ASSISTANT_SERVICE_OTHER", e.toString());
         }
-        return 0;
+        return Service.START_NOT_STICKY;
         //return super.onStartCommand(intent, flags, startId);
     }
 
