@@ -10,6 +10,7 @@
     <item name="model_spinner_label" type="id" />
     <item name="reload" type="id" />
     <item name="stop" type="id" />
+    <item name="kill" type="id" />
     <item name="texture" type="id" />
     <item name="btn_enroll" type="id" />
     <item name="btn_test" type="id" />

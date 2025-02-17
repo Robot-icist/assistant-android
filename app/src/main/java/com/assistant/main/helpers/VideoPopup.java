@@ -27,7 +27,7 @@ public class VideoPopup {
     private WindowManager windowManager;
     private View overlayView;
     private boolean isVideoPlaying = false;
-    private final Queue<byte[]> videoQueue = new LinkedList<>();
+    public final Queue<byte[]> videoQueue = new LinkedList<>();
 
     public VideoPopup(Context context) {
         this.context = context.getApplicationContext();

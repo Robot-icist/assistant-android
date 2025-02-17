@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name">Custom Assistant</string>
     <string name="recognize_file">Recognize File</string>
-    <string name="recognize_microphone"> \u00AE Recognize Microphone</string>
+    <string name="recognize_microphone"> 🎤 Recognize Microphone</string>
     <string name="stop_microphone">Stop Microphone</string>
     <string name="preparing">Preparing the recognizer\n</string>
     <string name="ready">Ready\n</string>
@@ -36,10 +36,20 @@
         <item>EN</item>
         <item>FR</item>
     </string-array>
+    <string-array name="llm_models">
+        <item>llama3.2:1b</item>
+        <item>llama3.2</item>
+        <item>qwen2.5</item>
+        <item>phi3</item>
+        <item>deepseek-r1:1.5b</item>
+        <item>llama2-uncensored</item>
+    </string-array>
     <string name="model_label">Models</string>
-    <string name="reload"> \u27F3 Reload</string>
-    <string name="stop"> \u0496 Stop</string>
-    <string name="train"> \u0488 Train</string>
+    <string name="llm_model_label">LLM Models</string>
+    <string name="reload"> 🔁 Reload</string>
+    <string name="kill"> 🛑 Kill</string>
+    <string name="stop"> ⬜ </string>
+    <string name="train"> 🥷 Train</string>
     <string name="local">Local</string>
     <string name="video">Video</string>
     <string name="google">Google</string>
@@ -47,5 +57,6 @@
     <string name="serverip">Server IP</string>
     <string name="speakerid">Speaker ID</string>
     <string name="textlabel">Text</string>
+    <string name="enter"> ↩️ </string>
 
 </resources>

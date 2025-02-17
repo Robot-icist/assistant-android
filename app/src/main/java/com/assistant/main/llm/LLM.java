@@ -24,9 +24,9 @@ public class LLM {
     private LLM(Context context, OutputHandler.ProgressListener listener) {
         LlmInferenceOptions options = LlmInferenceOptions.builder()
                 .setModelPath(MODEL_PATH)
-                .setMaxTokens(512)
+                .setMaxTokens(1024)
                 .setTopK(50)
-                .setRandomSeed(1)
+                .setRandomSeed(1234)
                 .setTemperature(0.1f)
                 .setResultListener((partialResult, done) -> {
                     Pair<String, Boolean> result = new Pair<>(partialResult, done);

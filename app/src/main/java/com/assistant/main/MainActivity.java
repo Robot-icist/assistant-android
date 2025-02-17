@@ -1,6 +1,7 @@
 package com.assistant.main;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.content.Context;
@@ -51,6 +52,7 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -119,8 +121,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     public Spinner KeywordSpinner;
     public Spinner ModelSpinner;
 
+    public Spinner LlmModelSpinner;
+
     public String KeywordFileName;
     public String ModelFileName;
+
+    public String LlmModelFileName;
 
     private static int[] KEYWORD_FILE_RESOURCE_IDS = {
             R.raw.americano_android, R.raw.blueberry_android, R.raw.bumblebee_android, R.raw.grapefruit_android,
@@ -137,6 +143,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private Button enterButton;
     private ProgressBar loader;
+
+    private Button killButton;
     private TextureView textureView;
     private EditText enrollName;
     private CheckBox enrollCb;
@@ -218,12 +226,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
             });
 
-            findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
+            findViewById(R.id.kill).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     getApplicationContext().stopService(new Intent(getApplicationContext(), AssistantService.class));
                     getApplicationContext().stopService(new Intent(getApplicationContext(), FloatingWindowService.class));
                     System.exit(0);
+                }
+            });
+
+            findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    Tasks.SendPreferencesJson(getApplicationContext(),"stop");
+                    Tasks.RemoveAudioTracks();
+                    Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
+                    Tasks.StaticVideoPopup.dismissPopup();
+                    if(Tasks.AudioTracks.size() == 0)
+                        findViewById(R.id.stop).setVisibility(View.GONE);
                 }
             });
 
@@ -280,6 +300,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             trainButton = (Button) findViewById(R.id.btn_train);
             enterButton = (Button) findViewById(R.id.enter);
             loader = (ProgressBar) findViewById(R.id.loader);
+            killButton = (Button) findViewById(R.id.kill);
             enrollName = (EditText) findViewById(R.id.enrollName);
             handip = (EditText) findViewById(R.id.ip);
             serverip = (EditText) findViewById(R.id.server);
@@ -307,6 +328,32 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                     setPreferenceI("local", isChecked ? 1 : 0);
+                    if(isChecked){
+                        findViewById(R.id.spinner3).setVisibility(View.GONE);
+                        findViewById(R.id.serverLayout).setVisibility(View.GONE);
+                        findViewById(R.id.speakerLayout).setVisibility(View.GONE);
+                        ValueAnimator anim = ValueAnimator.ofInt(resultView.getHeight(), 700); // Target height in pixels
+                        anim.setDuration(300); // Animation duration
+                        anim.addUpdateListener(animation -> {
+                            ViewGroup.LayoutParams params = resultView.getLayoutParams();
+                            params.height = (int) animation.getAnimatedValue();
+                            resultView.setLayoutParams(params);
+                        });
+                        anim.start();
+                    }
+                    else{
+                        findViewById(R.id.spinner3).setVisibility(View.VISIBLE);
+                        findViewById(R.id.serverLayout).setVisibility(View.VISIBLE);
+                        findViewById(R.id.speakerLayout).setVisibility(View.VISIBLE);
+                        ValueAnimator anim = ValueAnimator.ofInt(resultView.getHeight(), 450); // Target height in pixels
+                        anim.setDuration(300); // Animation duration
+                        anim.addUpdateListener(animation -> {
+                            ViewGroup.LayoutParams params = resultView.getLayoutParams();
+                            params.height = (int) animation.getAnimatedValue();
+                            resultView.setLayoutParams(params);
+                        });
+                        anim.start();
+                    }
                 }
             });
 
@@ -394,9 +441,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 public void onTextChanged(CharSequence s, int start, int before, int count) {
                 }
             });
+
             speaker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
             speaker.setWrapSelectorWheel(false);
-            speaker.setMaxValue(10);
+            speaker.setMaxValue(12);
             speaker.setMinValue(0);
             speaker.setEnabled(true);
             speaker.setValue(getPreferenceI("speaker"));
@@ -460,6 +508,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         });
 
 
+    };
+
+    public PropertyChangeListener loadingListener = evt -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean result = (Boolean) evt.getNewValue();
+                if(result){
+                    loader.setVisibility(View.VISIBLE);
+                    findViewById(R.id.stop).setVisibility(View.VISIBLE);
+                }
+                else{
+                    loader.setVisibility(View.GONE);
+                    if(Tasks.AudioTracks.size() == 0)
+                        findViewById(R.id.stop).setVisibility(View.GONE);
+                }
+            }
+        });
     };
     ///CAMERA PART
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
@@ -774,6 +840,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             Log.i("MainActivity", "Started");
             int tempKeyword = getPreferenceI("KeywordFilePosition");
             int tempModel = getPreferenceI("ModelFilePosition");
+            int tempLlmModel = getPreferenceI("LlmModelFilePosition");
             int tempSetEnroll = getPreferenceI("enroll");
             int tempSetBluetooth = getPreferenceI("SetBluetooth");
             int tempSetLocal = getPreferenceI("local");
@@ -781,11 +848,14 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             int tempSetGoogle = getPreferenceI("google");
             String tempKeywordS = getPreferenceS("KeywordFileName");
             String tempModelS = getPreferenceS("ModelFileName");
+            String tempLlmModelS = getPreferenceS("LlmModelFileName");
             handleSpinners();
             KeywordFileName = tempKeywordS;
             ModelFileName = tempModelS;
+            LlmModelFileName = tempLlmModelS;
             KeywordSpinner.setSelection(tempKeyword);
             ModelSpinner.setSelection(tempModel);
+            LlmModelSpinner.setSelection(tempLlmModel);
             enrollCb.setChecked(tempSetEnroll == 1);
             bluetoothCb.setChecked(tempSetBluetooth == 1);
             localCb.setChecked(tempSetLocal == 1);
@@ -800,6 +870,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             setPreferenceI("google", tempSetGoogle);
             setPreferenceS("KeywordFileName", tempKeywordS);
             setPreferenceS("ModelFileName", tempModelS);
+            setPreferenceS("LlmModelFileName", tempLlmModelS);
             // Recognizer initialization is a time-consuming and it involves IO,
             // so we execute it in async task
             if(CheckPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
@@ -813,6 +884,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                                 Tasks.ActionTask.propertyChangeSupport.removePropertyChangeListener("partialResult", l);
                             }
                             Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener("partialResult", listener);
+                            PropertyChangeListener[] loadingListeners = Tasks.ActionTask.propertyChangeSupport.getPropertyChangeListeners("loading");
+                            for (PropertyChangeListener l : loadingListeners) {
+                                Tasks.ActionTask.propertyChangeSupport.removePropertyChangeListener("loading", l);
+                            }
+                            Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener("loading", loadingListener);
                         }
                     },
                     2000);
@@ -1019,6 +1095,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void PopulateSpinners(){
         KeywordSpinner = findViewById(R.id.keyword_spinner);
         ModelSpinner = findViewById(R.id.model_spinner);
+        LlmModelSpinner = findViewById(R.id.llm_model_spinner);
 
         ArrayAdapter<CharSequence> adapter1 = ArrayAdapter.createFromResource(
                 this,
@@ -1033,8 +1110,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         adapter2.setDropDownViewResource(R.layout.keyword_spinner_item);
         ModelSpinner.setAdapter(adapter2);
 
+        ArrayAdapter<CharSequence> adapter3 = ArrayAdapter.createFromResource(
+                this,
+                R.array.llm_models,
+                R.layout.keyword_spinner_item);
+        adapter3.setDropDownViewResource(R.layout.keyword_spinner_item);
+        LlmModelSpinner.setAdapter(adapter3);
+
         KeywordSpinner.setSelection(getPreferenceI("KeywordFilePosition"));
         ModelSpinner.setSelection(getPreferenceI("ModelFilePosition"));
+        LlmModelSpinner.setSelection(getPreferenceI("LlmModelFilePosition"));
     }
 
     private void handleSpinners() {
@@ -1069,6 +1154,21 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 */
                 //stopService(AssistantService.class);
                 //startAssistantService(KeywordFileName, ModelFileName);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                // Do nothing.
+            }
+        });
+
+        LlmModelSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView,
+                                       int position, long id) {
+                Log.i("LlmModelSpinner", "called");
+                LlmModelFileName =  LlmModelSpinner.getSelectedItem().toString();
+                setPreferenceI("LlmModelFilePosition", position);
+                setPreferenceS("LlmModelFileName", LlmModelFileName);
             }
             @Override
             public void onNothingSelected(AdapterView<?> parentView) {

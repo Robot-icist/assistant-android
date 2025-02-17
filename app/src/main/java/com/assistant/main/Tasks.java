@@ -244,10 +244,28 @@ public class Tasks {
             this.bytesPerSample = bytesPerSample;
         }
     }
+    private static Boolean stopPlayback = false;
     private static final Object playbackLock = new Object();
+
+    public static List<AudioTrack> AudioTracks = new ArrayList<>();
+
+    public static void RemoveAudioTracks (){
+        AudioTracks.forEach(audioTrack -> {
+            audioTrack.release();
+        });
+        AudioTracks.removeAll(AudioTracks);
+        stopPlayback = true;
+        new Handler().postDelayed(() -> {
+            stopPlayback = false;
+        }, 2000);
+    };
+
     private static void playWavAudio(final byte[] wavData) {
         new Thread(() -> {
             synchronized (playbackLock) { // Ensure only one playback at a time
+                if(stopPlayback) {
+                    return;
+                }
                 try {
                     // Extract WAV file properties from the header
                     WavFileProperties wavProperties = extractWavProperties(wavData);
@@ -275,6 +293,7 @@ public class Tasks {
                         public void onMarkerReached(AudioTrack track) {
                             // Marker reached (audio finished)
                             track.release();
+                            AudioTracks.remove(track);
                         }
 
                         @Override
@@ -282,7 +301,7 @@ public class Tasks {
                             // Optionally handle periodic notifications, but not needed here
                         }
                     });
-
+                    AudioTracks.add(audioTrack);
                     // Start playback
                     audioTrack.play();
 
@@ -343,18 +362,22 @@ public class Tasks {
     }
 
     public static void SendPreferencesJson(Context context, String... text){
-        GetIp(() -> {
-            Integer speaker = getPreferenceI(context, "speaker");
-            Integer video = getPreferenceI(context, "video");
+        //GetIp(() -> {
+            String hotword = getPreferenceS(context, "KeywordFileName").split("_")[0].toLowerCase();
             String[] model = getPreferenceS(context, "ModelFileName").split("-");
             String lang = model[model.length-1];
+            String llm = getPreferenceS(context, "LlmModelFileName");
+            Integer speaker = getPreferenceI(context, "speaker");
+            Integer video = getPreferenceI(context, "video");
             Integer google = getPreferenceI(context, "google");
             JSONObject jobj = new JSONObject();
             try {
-                jobj.accumulate("ip", ipv4);
+                //jobj.accumulate("ip", ipv4);
+                jobj.accumulate("hotword", hotword);
+                jobj.accumulate("lang", lang);
+                jobj.accumulate("llm", llm);
                 jobj.accumulate("speaker", speaker);
                 jobj.accumulate("video", video);
-                jobj.accumulate("lang", lang);
                 jobj.accumulate("google", google);
                 jobj.accumulate("text", text.length > 0 ? text[0] : "");
                 String json = jobj.toString();
@@ -363,8 +386,10 @@ public class Tasks {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+        //});
     }
+
+    public static VideoPopup StaticVideoPopup;
     public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
         try {
             //AsyncHttpClient.getDefaultInstance().getServer().stop();
@@ -396,7 +421,7 @@ public class Tasks {
                     serviceReference.get().sendNotification("Websocket", "Connected");
 
                     VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
-
+                    StaticVideoPopup = videoPopup;
                     //webSocket.send(new byte[10]);
 
                     GetIp();
@@ -412,6 +437,10 @@ public class Tasks {
                                     Pair<String, Boolean> result = new Pair<>(s.replace("text:", ""), true);
                                     ActionTask.propertyChangeSupport.firePropertyChange("partialResult",null, result);
                                 }
+                            }
+                            if(s.toLowerCase().contains("loading:")){
+                                Boolean b = Boolean.parseBoolean(s.replace("loading:", ""));
+                                ActionTask.propertyChangeSupport.firePropertyChange("loading",null, b);
                             }
                         }
                     });
@@ -739,10 +768,10 @@ public class Tasks {
                                     new android.os.Handler().postDelayed(
                                             () -> {
                                                 try {
+                                                    SendPreferencesJson(serviceReference.get().getContext());
                                                     byte[] byteArray = FileUtils.getFileBytes(picturePath);
                                                     imagePopup.showImagePopup(byteArray);
                                                     //String base64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
-                                                    SendPreferencesJson(serviceReference.get().getContext());
                                                     if(globalWebSocket != null){
                                                         globalWebSocket.send(ImageUtils.resizeAndCompressImage(byteArray,50));
                                                     }
@@ -759,7 +788,7 @@ public class Tasks {
                         SendPreferencesJson(serviceReference.get().getContext(), text);
                     }
 
-                }else if (text.isEmpty()) {
+                }else if (local == 1 && text.isEmpty()) {
                         //serviceReference.get().tts.speak("Hello Boss !"+serviceReference.get().keyword, TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                         serviceReference.get().tts.speak("Hello Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                 }

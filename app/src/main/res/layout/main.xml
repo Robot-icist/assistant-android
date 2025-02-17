@@ -30,8 +30,6 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="15dp"
         android:spinnerMode="dialog"
         style="@android:style/Widget.Holo.Light.Spinner"
         android:entries="@array/keywords" />
@@ -45,9 +43,9 @@
         android:id="@+id/model_spinner_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/keyword_spinner"
-        android:layout_alignStart="@+id/keyword_spinner"
-        android:layout_alignLeft="@+id/keyword_spinner"
+        android:layout_alignBottom="@+id/model_spinner"
+        android:layout_alignStart="@+id/model_spinner"
+        android:layout_alignLeft="@+id/model_spinner"
         android:text="@string/model_label" />
     <Spinner
         android:id="@+id/model_spinner"
@@ -56,13 +54,34 @@
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginEnd="15dp"
         android:spinnerMode="dialog"
         style="@android:style/Widget.Holo.Light.Spinner"
         android:entries="@array/models" />
     </LinearLayout>
-
+    <LinearLayout
+        android:id="@+id/spinner3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/llm_model_spinner_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/llm_model_spinner"
+            android:layout_alignStart="@+id/llm_model_spinner"
+            android:layout_alignLeft="@+id/llm_model_spinner"
+            android:text="@string/llm_model_label" />
+        <Spinner
+            android:id="@+id/llm_model_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:spinnerMode="dialog"
+            style="@android:style/Widget.Holo.Light.Spinner"
+            android:entries="@array/llm_models" />
+    </LinearLayout>
     <LinearLayout
         android:id="@+id/ips"
         android:layout_width="match_parent"
@@ -122,17 +141,33 @@
         <EditText
             android:id="@+id/text"
             android:layout_width="0dp"
-            android:layout_weight=".90"
+            android:layout_weight=".80"
             android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/enter"
-            android:text="="
+            android:text="@string/enter"
             android:layout_width="0dp"
-            android:layout_weight=".10"
+            android:layout_weight=".20"
             android:layout_height="match_parent"/>
 
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/loader"
+        android:layout_marginHorizontal="5dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center_horizontal"
+        android:progressTint="@color/colorPrimaryDark"
+        android:visibility="gone" />
+    <Button
+        android:id="@+id/stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical|center_horizontal"
+        android:text="@string/stop"
+        android:visibility="gone"/>
     <Button
         android:id="@+id/recognize_mic"
         android:layout_width="match_parent"
@@ -155,19 +190,12 @@
             android:layout_height="wrap_content"
             android:text="@string/reload" />
         <Button
-            android:id="@+id/stop"
+            android:id="@+id/kill"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:text="@string/stop" />
+            android:text="@string/kill" />
     </LinearLayout>
-    <ProgressBar
-        android:id="@+id/loader"
-        android:layout_marginHorizontal="5dp"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_gravity="center_horizontal"
-        android:progressTint="@color/colorPrimaryDark"
-        android:visibility="gone" />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -262,7 +290,7 @@
     <TextView
         android:id="@+id/result_text"
         android:layout_width="fill_parent"
-        android:layout_height="220dp"
+        android:layout_height="150dp"
         android:gravity="bottom"
         android:scrollbars="vertical"
         android:textAppearance="?android:attr/textAppearanceMedium" />
