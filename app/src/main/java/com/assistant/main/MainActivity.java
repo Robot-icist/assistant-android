@@ -521,8 +521,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
                 else{
                     loader.setVisibility(View.GONE);
-                    if(Tasks.AudioTracks.size() == 0)
+                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing)
                         findViewById(R.id.stop).setVisibility(View.GONE);
+                }
+            }
+        });
+    };
+
+    public PropertyChangeListener stopListener = evt -> {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean result = (Boolean) evt.getNewValue();
+                if(result){
+                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing && loader.getVisibility() == View.GONE)
+                        findViewById(R.id.stop).setVisibility(View.GONE);
+                }
+                else{
+                        findViewById(R.id.stop).setVisibility(View.VISIBLE);
                 }
             }
         });
@@ -889,6 +905,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                                 Tasks.ActionTask.propertyChangeSupport.removePropertyChangeListener("loading", l);
                             }
                             Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener("loading", loadingListener);
+                            PropertyChangeListener[] stopListeners = Tasks.ActionTask.propertyChangeSupport.getPropertyChangeListeners("stop");
+                            for (PropertyChangeListener l : stopListeners) {
+                                Tasks.ActionTask.propertyChangeSupport.removePropertyChangeListener("stop", l);
+                            }
+                            Tasks.ActionTask.propertyChangeSupport.addPropertyChangeListener("stop", stopListener);
                         }
                     },
                     2000);

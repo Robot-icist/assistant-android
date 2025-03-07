@@ -47,4 +47,46 @@ public class FileTypeChecker {
         String boxType = new String(fileData, 4, 4); // "ftyp"
         return boxType.equals("ftyp");
     }
+
+    /**
+     * Checks if a byte array represents an image (PNG, JPEG, or GIF).
+     *
+     * @param fileData The byte array containing the file data.
+     * @return true if the data represents an image, false otherwise.
+     */
+    public static boolean isImage(byte[] fileData) {
+        if (fileData == null || fileData.length < 4) {
+            return false; // Too short to be a valid image
+        }
+
+        return isPng(fileData) || isJpeg(fileData) || isGif(fileData);
+    }
+
+    private static boolean isPng(byte[] fileData) {
+        // PNG files start with the following byte sequence: 89 50 4E 47 0D 0A 1A 0A
+        if (fileData.length < 8) return false;
+        return fileData[0] == (byte) 0x89 &&
+                fileData[1] == (byte) 0x50 &&
+                fileData[2] == (byte) 0x4E &&
+                fileData[3] == (byte) 0x47 &&
+                fileData[4] == (byte) 0x0D &&
+                fileData[5] == (byte) 0x0A &&
+                fileData[6] == (byte) 0x1A &&
+                fileData[7] == (byte) 0x0A;
+    }
+
+    private static boolean isJpeg(byte[] fileData) {
+        // JPEG files start with FF D8 FF
+        if (fileData.length < 3) return false;
+        return fileData[0] == (byte) 0xFF &&
+                fileData[1] == (byte) 0xD8 &&
+                fileData[2] == (byte) 0xFF;
+    }
+
+    private static boolean isGif(byte[] fileData) {
+        // GIF files start with GIF87a or GIF89a
+        if (fileData.length < 6) return false;
+        String header = new String(fileData, 0, 6);
+        return header.startsWith("GIF87a") || header.startsWith("GIF89a");
+    }
 }

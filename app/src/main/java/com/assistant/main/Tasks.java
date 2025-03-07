@@ -249,6 +249,8 @@ public class Tasks {
 
     public static List<AudioTrack> AudioTracks = new ArrayList<>();
 
+    public static Boolean Playing = false;
+
     public static void RemoveAudioTracks (){
         AudioTracks.forEach(audioTrack -> {
             audioTrack.release();
@@ -294,6 +296,8 @@ public class Tasks {
                             // Marker reached (audio finished)
                             track.release();
                             AudioTracks.remove(track);
+                            Playing = false;
+                            ActionTask.propertyChangeSupport.firePropertyChange("stop",null, true);
                         }
 
                         @Override
@@ -302,9 +306,11 @@ public class Tasks {
                         }
                     });
                     AudioTracks.add(audioTrack);
+
+                    ActionTask.propertyChangeSupport.firePropertyChange("stop",null, false);
                     // Start playback
                     audioTrack.play();
-
+                    Playing = true;
                     // Calculate the correct position for the notification marker
                     int totalFrames = wavProperties.dataLength / wavProperties.bytesPerSample * 8;
 
@@ -390,6 +396,7 @@ public class Tasks {
     }
 
     public static VideoPopup StaticVideoPopup;
+    public static ImagePopup StaticImagePopup;
     public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
         try {
             //AsyncHttpClient.getDefaultInstance().getServer().stop();
@@ -422,6 +429,7 @@ public class Tasks {
 
                     VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
                     StaticVideoPopup = videoPopup;
+                    ImagePopup imagePopup = new ImagePopup(serviceReference.get().getContext());
                     //webSocket.send(new byte[10]);
 
                     GetIp();
@@ -442,6 +450,10 @@ public class Tasks {
                                 Boolean b = Boolean.parseBoolean(s.replace("loading:", ""));
                                 ActionTask.propertyChangeSupport.firePropertyChange("loading",null, b);
                             }
+                            if(s.toLowerCase().contains("stop:")){
+                                Boolean b = Boolean.parseBoolean(s.replace("stop:", ""));
+                                ActionTask.propertyChangeSupport.firePropertyChange("stop",null, b);
+                            }
                         }
                     });
                     webSocket.setDataCallback(new DataCallback() {
@@ -457,6 +469,9 @@ public class Tasks {
                             }
                             else if(FileTypeChecker.isWav(data)){
                                 playWavAudio(data);
+                            }
+                            else if(FileTypeChecker.isImage(data)){
+                                imagePopup.showImagePopup(data);
                             }
                         }
                     });
