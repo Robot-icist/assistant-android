@@ -86,9 +86,16 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Function;
 
+import ai.picovoice.porcupinemanager.PorcupineManagerException;
+
 public class Tasks {
 
     public static class SetupTask extends AsyncTask<String, Void, Exception> {
+        static {
+            System.loadLibrary("kaldi_jni");
+            System.setProperty("org.bytedeco.javacpp.maxphysicalbytes", "0");
+            System.setProperty("org.bytedeco.javacpp.maxbytes", "0");
+        }
         static WeakReference<AssistantService> serviceReference;
         static File CascadeFile;
 
@@ -464,6 +471,11 @@ public class Tasks {
                             byteBufferList.get(data);
                             // note that this data has been read
                             byteBufferList.recycle();
+                            try {
+                                serviceReference.get().porcupineManager.stop();
+                            } catch (PorcupineManagerException e) {
+                               throw new RuntimeException(e);
+                            }
                             if(FileTypeChecker.isMp4(data)){
                                 videoPopup.showVideoPopup(data);
                             }
@@ -473,6 +485,8 @@ public class Tasks {
                             else if(FileTypeChecker.isImage(data)){
                                 imagePopup.showImagePopup(data);
                             }
+                            new android.os.Handler(Looper.getMainLooper()).postDelayed(
+                                () -> serviceReference.get().porcupineManager.start(),2000);
                         }
                     });
                     // Handle WebSocket closure

@@ -113,7 +113,7 @@ public class PorcupineManager {
         } catch (InterruptedException e) {
             throw new PorcupineManagerException(e);
         } finally {
-            porcupine.delete();
+            //porcupine.delete();
         }
     }
 }

@@ -70,6 +70,7 @@ class AudioRecorder {
         while (!stopped.get()) {
             Thread.sleep(10);
         }
+        stop.set(false);
         started.set(false);
     }
 
@@ -99,9 +100,9 @@ class AudioRecorder {
         } catch (IllegalArgumentException | IllegalStateException e) {
             throw new PorcupineManagerException(e);
         } finally {
-            if (record != null) {
+            /*if (record != null) {
                 record.release();
-            }
+            }*/
             stopped.set(true);
         }
     }

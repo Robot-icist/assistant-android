@@ -51,7 +51,7 @@ import ai.picovoice.porcupinemanager.PorcupineManagerException;
 public class AssistantService extends android.app.Service implements RecognitionListener {
     private static final String CHANNEL_ID = "AssistantServiceChannel";
 
-    private PorcupineManager porcupineManager;
+    public PorcupineManager porcupineManager;
     public SpeechRecognizer recognizer;
     public Model model;
     public MediaPlayer mediaPlayer;
@@ -255,8 +255,8 @@ public class AssistantService extends android.app.Service implements Recognition
         }catch (Exception e){
             Log.e("ASSISTANT_SERVICE_OTHER", e.toString());
         }
-        return Service.START_NOT_STICKY;
-        //return super.onStartCommand(intent, flags, startId);
+        //return Service.START_NOT_STICKY;
+        return super.onStartCommand(intent, flags, startId);
     }
 
     @Nullable
