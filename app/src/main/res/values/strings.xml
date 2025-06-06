@@ -37,12 +37,11 @@
         <item>FR</item>
     </string-array>
     <string-array name="llm_models">
-        <item>llama3.2:1b</item>
-        <item>llama3.2</item>
+        <item>llama3.2:3b</item>
+        <item>artifish/llama3.2-uncensored</item>
         <item>qwen2.5</item>
-        <item>phi3</item>
-        <item>deepseek-r1:1.5b</item>
-        <item>llama2-uncensored</item>
+        <item>gemma3:4b</item>
+        <item>deepseek-r1:7b</item>
     </string-array>
     <string name="model_label">Models</string>
     <string name="llm_model_label">LLM Models</string>
@@ -58,5 +57,7 @@
     <string name="speakerid">Speaker ID</string>
     <string name="textlabel">Text</string>
     <string name="enter"> ↩️ </string>
+    <string name="D3"> 3D </string>
+    <string name="keepInMemory"> KeepInMemory </string>
 
 </resources>

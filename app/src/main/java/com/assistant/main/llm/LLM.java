@@ -16,7 +16,7 @@ import java.util.Arrays;
 
 public class LLM {
 
-    private static final String MODEL_PATH = "/data/local/tmp/llm/gemma2b.bin";
+    private static final String MODEL_PATH = "/data/local/tmp/llm/gemma2.bin";
     private static LLM instance;
     private static LlmInference llmInference;
     private final PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
@@ -24,16 +24,17 @@ public class LLM {
     private LLM(Context context, OutputHandler.ProgressListener listener) {
         LlmInferenceOptions options = LlmInferenceOptions.builder()
                 .setModelPath(MODEL_PATH)
-                .setMaxTokens(1024)
+                .setMaxTokens(2048)
                 .setTopK(50)
                 .setRandomSeed(1234)
                 .setTemperature(0.1f)
                 .setResultListener((partialResult, done) -> {
-                    Pair<String, Boolean> result = new Pair<>(partialResult, done);
+                    String resultFormatted = partialResult.replace("*", "");
+                    Pair<String, Boolean> result = new Pair<>(resultFormatted, done);
                     propertyChangeSupport.firePropertyChange("partialResult", null, result);
                     propertyChangeSupport.firePropertyChange("partialResultMain", null, result);
                     if(listener != null){
-                        listener.run(partialResult, done);
+                        listener.run(resultFormatted, done);
                     }
                 })
                 .build();

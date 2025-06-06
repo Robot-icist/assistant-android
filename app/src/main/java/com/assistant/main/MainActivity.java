@@ -40,6 +40,7 @@ import androidx.core.widget.ContentLoadingProgressBar;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 import android.provider.Settings;
 import android.speech.tts.TextToSpeech;
 import android.text.Editable;
@@ -150,8 +151,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private CheckBox enrollCb;
     private CheckBox bluetoothCb;
     private CheckBox localCb;
+    private CheckBox keepinMemoryCb;
     private CheckBox videoCb;
     private CheckBox googleCb;
+
+    private CheckBox D3Cb;
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
     static {
         ORIENTATIONS.append(Surface.ROTATION_0, 270);
@@ -309,8 +313,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             enrollCb = (CheckBox) findViewById(R.id.enrollCb);
             bluetoothCb = (CheckBox) findViewById(R.id.bluetoothCb);
             localCb = (CheckBox) findViewById(R.id.localCb);
+            keepinMemoryCb = (CheckBox) findViewById(R.id.keepInMemoryCb);
             videoCb = (CheckBox) findViewById(R.id.videoCb);
             googleCb = (CheckBox) findViewById(R.id.googleCb);
+            D3Cb = (CheckBox) findViewById(R.id.D3Cb);
             enrollCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -357,6 +363,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
             });
 
+            keepinMemoryCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    setPreferenceI("keepInMemory", isChecked ? 1 : 0);
+                }
+            });
             videoCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -370,6 +382,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     setPreferenceI("google", isChecked ? 1 : 0);
                     /*if(Tasks.globalWebSocket != null)
                         Tasks.globalWebSocket.send("google:"+ (isChecked ? 1 : 0)); */
+                }
+            });
+
+            D3Cb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    setPreferenceI("D3", isChecked ? 1 : 0);
                 }
             });
             assert takePictureButton != null;
@@ -476,6 +495,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 @Override
                 public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
                     Log.e("Alert","Lets See if it Works !!!");
+                    new Handler(Looper.getMainLooper()).post(() -> {
+                        Toast.makeText(getApplication().getApplicationContext(), "Uncaught Exception Main Activity", Toast.LENGTH_SHORT).show();
+                    });
+                    Thread.yield();
                 }
             });
 
@@ -862,6 +885,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             int tempSetLocal = getPreferenceI("local");
             int tempSetVideo = getPreferenceI("video");
             int tempSetGoogle = getPreferenceI("google");
+            int tempSetD3 = getPreferenceI("D3");
+            int tempSetKeepInMemory = getPreferenceI("keepInMemory");
             String tempKeywordS = getPreferenceS("KeywordFileName");
             String tempModelS = getPreferenceS("ModelFileName");
             String tempLlmModelS = getPreferenceS("LlmModelFileName");
@@ -877,6 +902,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             localCb.setChecked(tempSetLocal == 1);
             videoCb.setChecked(tempSetVideo == 1);
             googleCb.setChecked(tempSetGoogle == 1);
+            D3Cb.setChecked(tempSetD3 == 1);
+            keepinMemoryCb.setChecked(tempSetKeepInMemory == 1);
             setPreferenceI("KeywordFilePosition", tempKeyword);
             setPreferenceI("ModelFilePosition", tempModel);
             setPreferenceI("enroll", tempSetEnroll);
@@ -884,6 +911,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             setPreferenceI("local", tempSetLocal);
             setPreferenceI("video", tempSetVideo);
             setPreferenceI("google", tempSetGoogle);
+            setPreferenceI("D3", tempSetD3);
+            setPreferenceI("keepInMemory", tempSetKeepInMemory);
             setPreferenceS("KeywordFileName", tempKeywordS);
             setPreferenceS("ModelFileName", tempModelS);
             setPreferenceS("LlmModelFileName", tempLlmModelS);

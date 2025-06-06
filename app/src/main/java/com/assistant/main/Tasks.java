@@ -357,7 +357,8 @@ public class Tasks {
             Log.d(TAG, "Attempting to reconnect in 2 seconds...");
             serviceReference.get().sendNotification("Websocket", "Reconnecting");
 
-            AsyncServer.getDefault().postDelayed(() -> {
+            //AsyncServer.getDefault(Looper.getMainLooper()).postDelayed(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
                 try {
                     Log.d(TAG, "Reconnecting to WebSocket...");
                     connectToWebSocket(serviceReference);
@@ -382,7 +383,9 @@ public class Tasks {
             String llm = getPreferenceS(context, "LlmModelFileName");
             Integer speaker = getPreferenceI(context, "speaker");
             Integer video = getPreferenceI(context, "video");
+            Integer keepInMemory = getPreferenceI(context, "keepInMemory");
             Integer google = getPreferenceI(context, "google");
+            Integer D3 = getPreferenceI(context, "D3");
             JSONObject jobj = new JSONObject();
             try {
                 //jobj.accumulate("ip", ipv4);
@@ -390,8 +393,10 @@ public class Tasks {
                 jobj.accumulate("lang", lang);
                 jobj.accumulate("llm", llm);
                 jobj.accumulate("speaker", speaker);
+                jobj.accumulate("keepInMemory", keepInMemory);
                 jobj.accumulate("video", video);
                 jobj.accumulate("google", google);
+                jobj.accumulate("D3", D3);
                 jobj.accumulate("text", text.length > 0 ? text[0] : "");
                 String json = jobj.toString();
                 if(globalWebSocket != null)
@@ -434,8 +439,10 @@ public class Tasks {
                     webSocket.send("Android Connected");
                     serviceReference.get().sendNotification("Websocket", "Connected");
 
-                    VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
+                    /*VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
                     StaticVideoPopup = videoPopup;
+                     */
+                    StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
                     ImagePopup imagePopup = new ImagePopup(serviceReference.get().getContext());
                     //webSocket.send(new byte[10]);
 
@@ -471,13 +478,19 @@ public class Tasks {
                             byteBufferList.get(data);
                             // note that this data has been read
                             byteBufferList.recycle();
-                            try {
+                            /*try {
                                 serviceReference.get().porcupineManager.stop();
                             } catch (PorcupineManagerException e) {
                                throw new RuntimeException(e);
-                            }
+                            }*/
                             if(FileTypeChecker.isMp4(data)){
-                                videoPopup.showVideoPopup(data);
+                                try{
+                                    StaticVideoPopup.showVideoPopup(data);
+                                }catch (Exception e){
+                                    e.printStackTrace();
+                                    StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
+                                    StaticVideoPopup.showVideoPopup(data);
+                                }
                             }
                             else if(FileTypeChecker.isWav(data)){
                                 playWavAudio(data);
@@ -485,8 +498,12 @@ public class Tasks {
                             else if(FileTypeChecker.isImage(data)){
                                 imagePopup.showImagePopup(data);
                             }
-                            new android.os.Handler(Looper.getMainLooper()).postDelayed(
-                                () -> serviceReference.get().porcupineManager.start(),2000);
+                           /* try {
+                                new android.os.Handler(Looper.getMainLooper()).postDelayed(
+                                        () -> serviceReference.get().porcupineManager.start(),2000);
+                            } catch (Exception e) {
+                                throw e;
+                            }*/
                         }
                     });
                     // Handle WebSocket closure
@@ -644,7 +661,21 @@ public class Tasks {
                         try {
                             new Handler(Looper.getMainLooper()).post(() -> {
                                 serviceReference.get().Toast(paramThrowable.toString());
+                                try {
+                                    new ActionTask(serviceReference.get()).execute("");
+                                } catch (ClassNotFoundException e) {
+                                    throw new RuntimeException(e);
+                                } catch (NoSuchMethodException e) {
+                                    throw new RuntimeException(e);
+                                } catch (InvocationTargetException e) {
+                                    throw new RuntimeException(e);
+                                } catch (IllegalAccessException e) {
+                                    throw new RuntimeException(e);
+                                } catch (NoSuchFieldException e) {
+                                    throw new RuntimeException(e);
+                                }
                             });
+
                             Thread.yield();
                         }catch (Exception e){
                             e.printStackTrace();
@@ -953,10 +984,11 @@ public class Tasks {
                     String condition = text.contains("on") || text.contains("allum") || text.contains("met") ? "on" : "off";
                     Settings.Global.putInt(serviceReference.get().getContentResolver(), Settings.Global.WIFI_ON, condition.equals("on") ? 1 : 0);
                 }else if (!text.isEmpty()) {
-                    //String prompt = "Tu es un expert francais sur tous les sujets et tu vas repondre a toutes mes demandes par des phrases simples et très courtes, maintenant tu vas simplement repondre normalement a ça : ";
-                    //llm.generateResponse(prompt+text);
-                    String prompt = "<start_of_turn>model\nYou Speak french and answer in french thanks. Tu parles francais et reponds en francais merci.<end_of_turn><start_of_turn>user\n"+text+"<end_of_turn>";
-                    LLM.getInstance(serviceReference.get().getContext(), null).generateResponse(text);
+                    String hotword = getPreferenceS(serviceReference.get().getContext(), "KeywordFileName").split("_")[0].toLowerCase();
+                    String[] model = getPreferenceS(serviceReference.get().getContext(), "ModelFileName").split("-");
+                    String lang = model[model.length-1];
+                    String prompt = "<start_of_turn>user\nYou are " + hotword +" and answer in "+ lang +" with small sentences and natural language thanks.<end_of_turn>\n<start_of_turn>user\n"+text+"<end_of_turn>\n";
+                    LLM.getInstance(serviceReference.get().getContext(), null).generateResponse(prompt);
                 }
 
                 /*try{

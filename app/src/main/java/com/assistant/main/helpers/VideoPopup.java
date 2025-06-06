@@ -105,7 +105,25 @@ public class VideoPopup {
                 videoView.start();
             });
 
-            videoView.setOnCompletionListener(i -> dismissPopup());
+            //videoView.setOnCompletionListener(i -> dismissPopup());
+            videoView.setOnCompletionListener(i -> {
+                isVideoPlaying = false;
+                playNextVideo();
+                View temp = overlayView;
+               /* new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if(windowManager != null && temp != null && temp.isAttachedToWindow())
+                        try{
+                            windowManager.removeView(temp);
+                        }catch (IllegalArgumentException e){
+                            e.printStackTrace();
+                            try{
+                                windowManager.removeViewImmediate(temp);
+                            }catch (IllegalArgumentException x){
+                                x.printStackTrace();
+                            }
+                        }
+                },2500);*/
+            });
 
             videoContainer.addView(videoView);
 
@@ -129,16 +147,21 @@ public class VideoPopup {
             );
             params.gravity = Gravity.CENTER;
 
+            removeView();
             overlayView = videoContainer;
             windowManager.addView(overlayView, params);
         });
     }
 
-    public void dismissPopup() {
+    public void removeView(){
         if (windowManager != null && overlayView != null) {
             windowManager.removeView(overlayView);
             overlayView = null;
         }
+    }
+
+    public void dismissPopup() {
+        removeView();
         isVideoPlaying = false;
         playNextVideo();
     }

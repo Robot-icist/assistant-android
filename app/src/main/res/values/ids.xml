@@ -31,4 +31,6 @@
     <item name="speaker" type="id"/>
     <item name="serverLayout" type="id"/>
     <item name="speakerLayout" type="id"/>
+    <item name="D3Cb" type="id"/>
+    <item name="keepInMemoryCb" type="id"/>
 </resources>

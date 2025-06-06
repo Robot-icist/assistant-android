@@ -152,15 +152,27 @@ public class AssistantService extends android.app.Service implements Recognition
                         keywordFilePath,
                         0.7f,
                         (keywordIndex) -> {
+                            new android.os.Handler(Looper.getMainLooper()).post(
+                                    () -> {
+                                        try{
+                                            Tasks.SendPreferencesJson(getApplicationContext(),"stop");
+                                            Tasks.RemoveAudioTracks();
+                                            Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
+                                            Tasks.StaticVideoPopup.dismissPopup();
 
-                            new Tasks.RecognizeTask(this).execute();
+                                            new Tasks.RecognizeTask(this).execute();
 
-                            if(!mediaPlayer.isPlaying())
-                               mediaPlayer.start();
-                            if(Settings.canDrawOverlays(getApplicationContext())){
-                                if(!Tasks.isMyServiceRunning(getContext(), FloatingWindowService.class))
-                                    startService(new Intent(getApplicationContext(), FloatingWindowService.class));
-                            }
+                                            if(!mediaPlayer.isPlaying())
+                                                mediaPlayer.start();
+                                            if(Settings.canDrawOverlays(getApplicationContext())){
+                                                if(!Tasks.isMyServiceRunning(getContext(), FloatingWindowService.class))
+                                                    startService(new Intent(getApplicationContext(), FloatingWindowService.class));
+                                            }
+                                        }catch(Exception e){
+                                            Log.e("assistant porcupine", e.getMessage());
+                                        }
+                                    });
+
                         });
 
                 porcupineManager.start();
