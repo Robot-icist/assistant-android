@@ -38,7 +38,8 @@ public class AudioStreamer {
     private OkHttpClient whisperClient;
     private boolean isRecording = false;
     private ExecutorService executor;
-    private final String whisperWebsocketUrl = "wss://whisper-personai.pagekite.me/asr?android=true";
+    private String domain = "personai";
+    private String whisperWebsocketUrl = "wss://whisper-" + domain +".pagekite.me/asr?android=true";
     private static final int CHUNK_DURATION_MS = 100;
     private static final int BYTES_PER_SAMPLE = 2; // PCM 16-bit
     private static final int CHANNELS = 1;
@@ -71,11 +72,17 @@ public class AudioStreamer {
     }
 
     // --- WebSocket and Audio Streaming ---
-    public void startStreaming() {
-        connectWebSocket();
+    public void startStreaming(String domain) {
+        connectWebSocket(domain);
     }
 
     private void connectWebSocket() {
+        connectWebSocket(null);
+    }
+    private void connectWebSocket(String domain) {
+        if(domain != null)
+            this.domain = domain;
+        this.whisperWebsocketUrl = "wss://whisper-" + domain +".pagekite.me/asr?android=true";
         whisperClient = new OkHttpClient();
         Request whisperRequest = new Request.Builder()
                 .url(whisperWebsocketUrl)

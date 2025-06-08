@@ -224,10 +224,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
         <TextView
-        android:layout_marginHorizontal="0dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/bluetooth"/>
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/bluetooth"/>
         <CheckBox
             android:layout_marginHorizontal="0dp"
             android:id="@id/localCb"
@@ -238,7 +238,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/local"/>
-
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/whisperCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/whisper"/>
         <CheckBox
             android:layout_marginHorizontal="0dp"
             android:id="@id/videoCb"
@@ -251,16 +260,6 @@
             android:text="@string/video"/>
         <CheckBox
             android:layout_marginHorizontal="0dp"
-            android:id="@id/googleCb"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        <TextView
-            android:layout_marginHorizontal="0dp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/google"/>
-        <CheckBox
-            android:layout_marginHorizontal="0dp"
             android:id="@id/D3Cb"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
@@ -269,6 +268,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/D3"/>
+        <CheckBox
+            android:layout_marginHorizontal="0dp"
+            android:id="@id/googleCb"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+        <TextView
+            android:layout_marginHorizontal="0dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/google"/>
         <CheckBox
             android:layout_marginHorizontal="0dp"
             android:id="@id/keepInMemoryCb"

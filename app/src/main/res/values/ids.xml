@@ -33,4 +33,5 @@
     <item name="speakerLayout" type="id"/>
     <item name="D3Cb" type="id"/>
     <item name="keepInMemoryCb" type="id"/>
+    <item name="whisperCb" type="id"/>
 </resources>

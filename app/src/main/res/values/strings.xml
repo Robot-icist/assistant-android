@@ -57,7 +57,7 @@
     <string name="speakerid">Speaker ID</string>
     <string name="textlabel">Text</string>
     <string name="enter"> ↩️ </string>
-    <string name="D3"> 3D </string>
-    <string name="keepInMemory"> KeepInMemory </string>
-
+    <string name="D3">3D</string>
+    <string name="keepInMemory">KeepInMemory</string>
+    <string name="whisper">Whisper</string>
 </resources>

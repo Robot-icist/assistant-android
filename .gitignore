@@ -9,3 +9,6 @@
 *.lst
 *.iml
 **/aars/build
+/.env
+*.env
+.env

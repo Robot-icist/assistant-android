@@ -161,27 +161,35 @@ public class AssistantService extends android.app.Service implements Recognition
                                             Tasks.RemoveAudioTracks();
                                             Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
                                             Tasks.StaticVideoPopup.dismissPopup();
+                                            int whisper = getPreferenceI("whisper");
+                                            int local = getPreferenceI("local");
+                                            if(whisper == 0 || local == 1)
+                                                new Tasks.RecognizeTask(this).execute();
+                                            else{
+                                                AudioStreamer audioStreamer = new AudioStreamer();
 
-                                            //new Tasks.RecognizeTask(this).execute();
-
-                                            AudioStreamer audioStreamer = new AudioStreamer();
-
-                                            audioStreamer.addOnJsonMessageListener(json -> {
-                                                try{
-                                                    // React to incoming JSON
-                                                    Log.d("ClientActivity", "JSON received: " + json.toString());
-                                                    JSONArray lines = json.getJSONArray("lines");
-                                                    JSONObject line = lines.getJSONObject(0);
-                                                    String text = line.getString("text");
-                                                    Log.d("ClientActivity", "JSON received: " + text);
-                                                    Tasks.ActionTask.Task.doInBackground(text);
-                                                    audioStreamer.stopStreaming();
-                                                }catch (Exception e){
-                                                    e.printStackTrace();
-                                                }
-                                            });
-
-                                            audioStreamer.startStreaming();
+                                                audioStreamer.addOnJsonMessageListener(json -> {
+                                                    try{
+                                                        // React to incoming JSON
+                                                        Log.d("ClientActivity", "JSON received: " + json.toString());
+                                                        JSONArray lines = json.getJSONArray("lines");
+                                                        JSONObject line = lines.getJSONObject(0);
+                                                        String text = line.getString("text");
+                                                        Log.d("ClientActivity", "JSON received: " + text);
+                                                        if(!text.isEmpty()){
+                                                            Tasks.ActionTask.Task.doInBackground(text);
+                                                            audioStreamer.stopStreaming();
+                                                            stopService(new Intent(getContext(), FloatingWindowService.class));
+                                                        }
+                                                    }catch (Exception e){
+                                                        e.printStackTrace();
+                                                    }
+                                                });
+                                                String serverUrl = getPreferenceS("serverip");
+                                                String split = serverUrl.split("-")[1];
+                                                String domain = split.split("\\.")[0];
+                                                audioStreamer.startStreaming(domain);
+                                            }
 
                                             if(!mediaPlayer.isPlaying())
                                                 mediaPlayer.start();
@@ -450,8 +458,13 @@ public class AssistantService extends android.app.Service implements Recognition
     }
 
     private int getPreferenceI(String key){
-        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("", MODE_PRIVATE);
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("MainActivity", MODE_PRIVATE);
         return sharedPref.getInt(key, 0);
+    }
+
+    private String getPreferenceS(String key){
+        SharedPreferences sharedPref = getApplicationContext().getSharedPreferences("MainActivity", MODE_PRIVATE);
+        return sharedPref.getString(key, "");
     }
 
     public void Toast(String message){

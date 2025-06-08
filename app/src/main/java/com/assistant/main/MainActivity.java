@@ -151,6 +151,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private CheckBox enrollCb;
     private CheckBox bluetoothCb;
     private CheckBox localCb;
+    private CheckBox whisperCb;
     private CheckBox keepinMemoryCb;
     private CheckBox videoCb;
     private CheckBox googleCb;
@@ -313,6 +314,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             enrollCb = (CheckBox) findViewById(R.id.enrollCb);
             bluetoothCb = (CheckBox) findViewById(R.id.bluetoothCb);
             localCb = (CheckBox) findViewById(R.id.localCb);
+            whisperCb = (CheckBox) findViewById(R.id.whisperCb);
             keepinMemoryCb = (CheckBox) findViewById(R.id.keepInMemoryCb);
             videoCb = (CheckBox) findViewById(R.id.videoCb);
             googleCb = (CheckBox) findViewById(R.id.googleCb);
@@ -360,6 +362,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         });
                         anim.start();
                     }
+                }
+            });
+
+            whisperCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    setPreferenceI("whisper", isChecked ? 1 : 0);
                 }
             });
 
@@ -883,6 +892,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             int tempSetEnroll = getPreferenceI("enroll");
             int tempSetBluetooth = getPreferenceI("SetBluetooth");
             int tempSetLocal = getPreferenceI("local");
+            int tempSetWhisper = getPreferenceI("whisper");
             int tempSetVideo = getPreferenceI("video");
             int tempSetGoogle = getPreferenceI("google");
             int tempSetD3 = getPreferenceI("D3");
@@ -900,6 +910,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             enrollCb.setChecked(tempSetEnroll == 1);
             bluetoothCb.setChecked(tempSetBluetooth == 1);
             localCb.setChecked(tempSetLocal == 1);
+            whisperCb.setChecked(tempSetWhisper == 1);
             videoCb.setChecked(tempSetVideo == 1);
             googleCb.setChecked(tempSetGoogle == 1);
             D3Cb.setChecked(tempSetD3 == 1);
@@ -909,6 +920,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             setPreferenceI("enroll", tempSetEnroll);
             setPreferenceI("SetBluetooth", tempSetBluetooth);
             setPreferenceI("local", tempSetLocal);
+            setPreferenceI("whisper", tempSetWhisper);
             setPreferenceI("video", tempSetVideo);
             setPreferenceI("google", tempSetGoogle);
             setPreferenceI("D3", tempSetD3);
