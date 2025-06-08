@@ -87,6 +87,7 @@ import java.util.concurrent.Callable;
 import java.util.function.Function;
 
 import ai.picovoice.porcupinemanager.PorcupineManagerException;
+import okio.ByteString;
 
 public class Tasks {
 
@@ -343,7 +344,8 @@ public class Tasks {
 
 
     public static boolean isReconnecting = false;
-    public static WebSocket globalWebSocket = null;
+    //public static WebSocket globalWebSocket = null;
+    public static okhttp3.WebSocket globalWebSocket = null;
 
     public static String ipv4 = null;
 
@@ -409,7 +411,7 @@ public class Tasks {
 
     public static VideoPopup StaticVideoPopup;
     public static ImagePopup StaticImagePopup;
-    public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
+    /*public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
         try {
             //AsyncHttpClient.getDefaultInstance().getServer().stop();
             String jarvisUrl = getPreferenceS(serviceReference.get().getContext(),"serverip");
@@ -439,9 +441,9 @@ public class Tasks {
                     webSocket.send("Android Connected");
                     serviceReference.get().sendNotification("Websocket", "Connected");
 
-                    /*VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
+                    *//*VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
                     StaticVideoPopup = videoPopup;
-                     */
+                     *//*
                     StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
                     ImagePopup imagePopup = new ImagePopup(serviceReference.get().getContext());
                     //webSocket.send(new byte[10]);
@@ -478,11 +480,11 @@ public class Tasks {
                             byteBufferList.get(data);
                             // note that this data has been read
                             byteBufferList.recycle();
-                            /*try {
+                            *//*try {
                                 serviceReference.get().porcupineManager.stop();
                             } catch (PorcupineManagerException e) {
                                throw new RuntimeException(e);
-                            }*/
+                            }*//*
                             if(FileTypeChecker.isMp4(data)){
                                 try{
                                     StaticVideoPopup.showVideoPopup(data);
@@ -498,12 +500,12 @@ public class Tasks {
                             else if(FileTypeChecker.isImage(data)){
                                 imagePopup.showImagePopup(data);
                             }
-                           /* try {
+                           *//* try {
                                 new android.os.Handler(Looper.getMainLooper()).postDelayed(
                                         () -> serviceReference.get().porcupineManager.start(),2000);
                             } catch (Exception e) {
                                 throw e;
-                            }*/
+                            }*//*
                         }
                     });
                     // Handle WebSocket closure
@@ -537,6 +539,101 @@ public class Tasks {
             scheduleReconnect(serviceReference);
         }
 
+    }*/
+
+    public static void connectToWebSocket(WeakReference<AssistantService> serviceReference) {
+        try {
+            String jarvisUrl = getPreferenceS(serviceReference.get().getContext(), "serverip");
+
+            okhttp3.Request request = new okhttp3.Request.Builder()
+                    .url("wss://" + jarvisUrl)
+                    .build();
+
+            okhttp3.OkHttpClient client = new okhttp3.OkHttpClient.Builder()
+                    .readTimeout(0, java.util.concurrent.TimeUnit.MILLISECONDS)
+                    .build();
+
+            client.newWebSocket(request, new okhttp3.WebSocketListener() {
+                @Override
+                public void onOpen(okhttp3.WebSocket webSocket, okhttp3.Response response) {
+                    isReconnecting = false;
+                    globalWebSocket = webSocket;
+                    webSocket.send("Android Connected");
+                    serviceReference.get().sendNotification("Websocket", "Connected");
+
+                    StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
+                    StaticImagePopup = new ImagePopup(serviceReference.get().getContext());
+
+                    //GetIp();
+                    SendPreferencesJson(serviceReference.get().getContext());
+                }
+
+                @Override
+                public void onMessage(okhttp3.WebSocket webSocket, String s) {
+                    System.out.println("I got a string: " + s);
+                    if (s.toLowerCase().contains("text:")) {
+                        if (getPreferenceI(serviceReference.get().getContext(), "local") == 1)
+                            serviceReference.get().tts.speak(s.replace("text:", ""), TextToSpeech.QUEUE_ADD, null, String.valueOf(1));
+                        else {
+                            Pair<String, Boolean> result = new Pair<>(s.replace("text:", ""), true);
+                            ActionTask.propertyChangeSupport.firePropertyChange("partialResult", null, result);
+                        }
+                    }
+                    if (s.toLowerCase().contains("loading:")) {
+                        Boolean b = Boolean.parseBoolean(s.replace("loading:", ""));
+                        ActionTask.propertyChangeSupport.firePropertyChange("loading", null, b);
+                    }
+                    if (s.toLowerCase().contains("stop:")) {
+                        Boolean b = Boolean.parseBoolean(s.replace("stop:", ""));
+                        ActionTask.propertyChangeSupport.firePropertyChange("stop", null, b);
+                    }
+                }
+
+                @Override
+                public void onMessage(okhttp3.WebSocket webSocket, okio.ByteString bytes) {
+                    System.out.println("I got some bytes!");
+                    byte[] data = bytes.toByteArray();
+                    if (FileTypeChecker.isMp4(data)) {
+                        try {
+                            StaticVideoPopup.showVideoPopup(data);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
+                            StaticVideoPopup.showVideoPopup(data);
+                        }
+                    } else if (FileTypeChecker.isWav(data)) {
+                        playWavAudio(data);
+                    } else if (FileTypeChecker.isImage(data)) {
+                        StaticImagePopup.showImagePopup(data);
+                    }
+                }
+
+                @Override
+                public void onClosing(okhttp3.WebSocket webSocket, int code, String reason) {
+                    Log.d(TAG, "WebSocket closing: " + reason);
+                    isReconnecting = false;
+                    scheduleReconnect(serviceReference);
+                }
+
+                @Override
+                public void onClosed(okhttp3.WebSocket webSocket, int code, String reason) {
+                    Log.d(TAG, "WebSocket closed: " + reason);
+                    isReconnecting = false;
+                    scheduleReconnect(serviceReference);
+                }
+
+                @Override
+                public void onFailure(okhttp3.WebSocket webSocket, Throwable t, okhttp3.Response response) {
+                    Log.e(TAG, "WebSocket error", t);
+                    isReconnecting = false;
+                    scheduleReconnect(serviceReference);
+                }
+            });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            scheduleReconnect(serviceReference);
+        }
     }
 
     public static void sendWebsocket(String ip, String protocol, String msg) {
@@ -654,7 +751,7 @@ public class Tasks {
                     connectToWebSocket(serviceReference);
 
                 imagePopup = new ImagePopup(serviceReference.get().getContext());
-                GetIp();
+                //GetIp();
                 Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
                     public void uncaughtException(Thread paramThread, Throwable paramThrowable) {
@@ -833,7 +930,7 @@ public class Tasks {
                                                     imagePopup.showImagePopup(byteArray);
                                                     //String base64 = Base64.encodeToString(byteArray, Base64.DEFAULT);
                                                     if(globalWebSocket != null){
-                                                        globalWebSocket.send(ImageUtils.resizeAndCompressImage(byteArray,50));
+                                                        globalWebSocket.send(ByteString.of(ImageUtils.resizeAndCompressImage(byteArray,50)));
                                                     }
                                                 } catch (Exception e) {
                                                     e.printStackTrace();
