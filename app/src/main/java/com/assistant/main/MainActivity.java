@@ -463,7 +463,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
             speaker.setDescendantFocusability(NumberPicker.FOCUS_BLOCK_DESCENDANTS);
             speaker.setWrapSelectorWheel(false);
-            speaker.setMaxValue(12);
+            speaker.setMaxValue(14);
             speaker.setMinValue(0);
             speaker.setEnabled(true);
             speaker.setValue(getPreferenceI("speaker"));

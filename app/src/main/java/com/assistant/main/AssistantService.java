@@ -30,8 +30,10 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
+import com.assistant.main.helpers.AudioStreamer;
 import com.assistant.main.helpers.Beeper;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kaldi.Model;
@@ -160,7 +162,26 @@ public class AssistantService extends android.app.Service implements Recognition
                                             Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
                                             Tasks.StaticVideoPopup.dismissPopup();
 
-                                            new Tasks.RecognizeTask(this).execute();
+                                            //new Tasks.RecognizeTask(this).execute();
+
+                                            AudioStreamer audioStreamer = new AudioStreamer();
+
+                                            audioStreamer.addOnJsonMessageListener(json -> {
+                                                try{
+                                                    // React to incoming JSON
+                                                    Log.d("ClientActivity", "JSON received: " + json.toString());
+                                                    JSONArray lines = json.getJSONArray("lines");
+                                                    JSONObject line = lines.getJSONObject(0);
+                                                    String text = line.getString("text");
+                                                    Log.d("ClientActivity", "JSON received: " + text);
+                                                    Tasks.ActionTask.Task.doInBackground(text);
+                                                    audioStreamer.stopStreaming();
+                                                }catch (Exception e){
+                                                    e.printStackTrace();
+                                                }
+                                            });
+
+                                            audioStreamer.startStreaming();
 
                                             if(!mediaPlayer.isPlaying())
                                                 mediaPlayer.start();

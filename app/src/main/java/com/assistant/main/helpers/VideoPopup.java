@@ -147,12 +147,27 @@ public class VideoPopup {
             );
             params.gravity = Gravity.CENTER;
 
+            /*
+
             removeView();
             overlayView = videoContainer;
             windowManager.addView(overlayView, params);
+
+             */
+            swapView(videoContainer, params);
         });
     }
 
+    public void swapView(FrameLayout videoContainer, WindowManager.LayoutParams params){
+        View tempView = overlayView;
+        overlayView = videoContainer;
+        windowManager.addView(overlayView, params);
+        if (windowManager != null && tempView != null) {
+            windowManager.removeView(tempView);
+            tempView = null;
+        }
+
+    }
     public void removeView(){
         if (windowManager != null && overlayView != null) {
             windowManager.removeView(overlayView);
