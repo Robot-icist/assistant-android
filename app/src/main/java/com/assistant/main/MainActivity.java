@@ -69,6 +69,7 @@ import android.widget.Toast;
 
 import org.apache.commons.io.FileUtils;
 import org.bytedeco.opencv.opencv_core.Mat;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.kaldi.Assets;
@@ -77,6 +78,7 @@ import org.kaldi.RecognitionListener;
 import org.kaldi.SpeechRecognizer;
 import org.kaldi.Vosk;
 import com.assistant.main.R;
+import com.assistant.main.helpers.AudioStreamer;
 import com.assistant.main.helpers.Cache;
 import com.assistant.main.llm.LLM;
 import com.google.mediapipe.tasks.core.OutputHandler;
@@ -117,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     public Model model;
     private SpeechRecognizer recognizer;
+    private AudioStreamer audioStreamer;
     TextView resultView;
 
     public Spinner KeywordSpinner;
@@ -1253,16 +1256,56 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     public void recognizeMicrophone() {
-        if (recognizer != null) {
+        if (recognizer != null ) {
             setUiState(STATE_DONE);
             recognizer.cancel();
             recognizer = null;
+            if(audioStreamer != null)
+                audioStreamer.stopStreaming();
         } else {
             setUiState(STATE_MIC);
             try {
                 recognizer = new SpeechRecognizer(model);
                 recognizer.addListener(this);
-                recognizer.startListening();
+                if(getPreferenceI("local") == 1 || getPreferenceI("whisper") == 0)
+                    recognizer.startListening();
+                else{
+                    Tasks.SendPreferencesJson(getApplicationContext(),"stop");
+                    Tasks.RemoveAudioTracks();
+                    Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
+                    Tasks.StaticVideoPopup.dismissPopup();
+
+                    audioStreamer = new AudioStreamer();
+
+                    audioStreamer.addOnJsonMessageListener(json -> {
+                        try{
+                            // React to incoming JSON
+                            Log.d("MainActivity", "JSON received: " + json.toString());
+                            JSONArray lines = json.getJSONArray("lines");
+                            String bufferTranscription = json.getString("buffer_transcription");
+                            JSONObject line = lines.getJSONObject(0);
+                            String text = line.getString("text");
+                            Log.d("MainActivity", "JSON received: " + text);
+                            if(!bufferTranscription.isEmpty())
+                                resultView.append("\nbuffer_transcription:\n"+bufferTranscription);
+                            if(!text.isEmpty() && bufferTranscription.isEmpty()){
+                                resultView.append("\nuser:\n"+text+"\n");
+                                Tasks.ActionTask.Task.doInBackground(text);
+                                audioStreamer.stopStreaming();
+                                stopService(new Intent(getApplicationContext(), FloatingWindowService.class));
+                                setUiState(STATE_DONE);
+                                recognizer.cancel();
+                                recognizer = null;
+                            }
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                    });
+                    String serverUrl = getPreferenceS("serverip");
+                    String split = serverUrl.split("-")[1];
+                    String domain = split.split("\\.")[0];
+                    audioStreamer.startStreaming(domain);
+                }
             } catch (IOException e) {
                 setErrorState(e.getMessage());
             }

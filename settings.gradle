@@ -1,2 +1,11 @@
+pluginManagement {
+    repositories {
+        // Tell Gradle to look for plugins in Google's Maven repository and the Gradle Plugin Portal
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
 include ':models', ':aars', ':app', 'porcupine', 'porcupinemanager'
 
