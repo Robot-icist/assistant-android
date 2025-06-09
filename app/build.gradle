@@ -1,4 +1,24 @@
+//plugins {
+//    id("com.android.application")
+//    id("org.jetbrains.kotlin.android")
+//    id("com.google.android.libraries.mapsplatform.secrets-gradle-plugin")
+//}
 apply plugin: 'com.android.application'
+
+// v-- START OF THE CUSTOM CODE --v
+
+// 1. Create a Properties object to hold the values
+def localProperties = new Properties()
+
+// 2. Create a reference to the local.properties file in the root project
+def localPropertiesFile = rootProject.file('local.properties')
+
+// 3. Load the properties file if it exists
+if (localPropertiesFile.exists()) {
+    localProperties.load(new FileInputStream(localPropertiesFile))
+}
+
+// ^-- END OF THE CUSTOM CODE --^
 
 repositories {
     google()
@@ -16,6 +36,16 @@ android {
         versionCode 2
         versionName "2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // v-- USE buildConfigField TO ADD THE VALUES --v
+
+        // Use the loaded properties to create BuildConfig fields.
+        // Provide a default value "" if the key is not found.
+        buildConfigField "String", "SMARTLIFE_USER", "${localProperties.getProperty('SMARTLIFE_USER', '')}"
+        buildConfigField "String", "SMARTLIFE_PWD", "${localProperties.getProperty('SMARTLIFE_PWD', '')}"
+        buildConfigField "String", "SMARTLIFE_REGION", "${localProperties.getProperty('SMARTLIFE_REGION', '')}"
+
+        // ^-- END OF THE buildConfigField SECTION --^
     }
     buildTypes {
         release {
@@ -46,5 +76,7 @@ dependencies {
     implementation 'com.google.mediapipe:tasks-genai:0.10.14'
     implementation 'commons-io:commons-io:2.4'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
 }
 

@@ -41,6 +41,8 @@ import com.assistant.main.helpers.HttpRequestHelper;
 import com.assistant.main.helpers.IP;
 import com.assistant.main.helpers.ImagePopup;
 import com.assistant.main.helpers.ImageUtils;
+import com.assistant.main.helpers.SmartLife;
+import com.assistant.main.helpers.StringUtils;
 import com.assistant.main.helpers.VideoPopup;
 import com.assistant.main.llm.LLM;
 import com.koushikdutta.async.AsyncServer;
@@ -84,6 +86,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import ai.picovoice.porcupinemanager.PorcupineManagerException;
@@ -356,7 +359,7 @@ public class Tasks {
                 return ;
             }
             isReconnecting = true;
-            Log.d(TAG, "Attempting to reconnect in 2 seconds...");
+            Log.d(TAG, "Attempting to reconnect in seconds...");
             serviceReference.get().sendNotification("Websocket", "Reconnecting");
 
             //AsyncServer.getDefault(Looper.getMainLooper()).postDelayed(() -> {
@@ -369,7 +372,7 @@ public class Tasks {
                     scheduleReconnect(serviceReference);
                 }
 
-            }, 2000); // Reconnect after 2 seconds */
+            }, 3000);
         }catch(Exception e){
             e.printStackTrace();
             scheduleReconnect(serviceReference);
@@ -411,136 +414,6 @@ public class Tasks {
 
     public static VideoPopup StaticVideoPopup;
     public static ImagePopup StaticImagePopup;
-    /*public static void connectToWebSocket(WeakReference<AssistantService> serviceReference){
-        try {
-            //AsyncHttpClient.getDefaultInstance().getServer().stop();
-            String jarvisUrl = getPreferenceS(serviceReference.get().getContext(),"serverip");
-            if(jarvisUrl.isEmpty())
-                jarvisUrl = "192.168.1.104:80";
-
-            String credentials = "user:testing";
-            String encodedCredentials = Base64.encodeToString(credentials.getBytes(), Base64.NO_WRAP);
-            String authUrl = "?auth=" + encodedCredentials;
-
-            AsyncHttpClient.getDefaultInstance().websocket("ws://"+jarvisUrl, "my-protocol", new AsyncHttpClient.WebSocketConnectCallback() {
-                @Override
-                public void onCompleted(Exception ex, WebSocket webSocket) {
-                    isReconnecting = false;
-                    if(webSocket != null){
-                        webSocket.setDataCallback((e, b) -> {});
-                        webSocket.setClosedCallback((h) -> { scheduleReconnect(serviceReference);});
-                        webSocket.setEndCallback((h) -> { scheduleReconnect(serviceReference);});
-                    }
-                    if (ex != null) {
-                        ex.printStackTrace();
-                        scheduleReconnect(serviceReference);
-                        return;
-                    }
-                    globalWebSocket = null;
-                    globalWebSocket = webSocket;
-                    webSocket.send("Android Connected");
-                    serviceReference.get().sendNotification("Websocket", "Connected");
-
-                    *//*VideoPopup videoPopup = new VideoPopup(serviceReference.get().getContext());
-                    StaticVideoPopup = videoPopup;
-                     *//*
-                    StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
-                    ImagePopup imagePopup = new ImagePopup(serviceReference.get().getContext());
-                    //webSocket.send(new byte[10]);
-
-                    GetIp();
-                    SendPreferencesJson(serviceReference.get().getContext());
-
-                    webSocket.setStringCallback(new WebSocket.StringCallback() {
-                        public void onStringAvailable(String s) {
-                            System.out.println("I got a string: " + s);
-                            if(s.toLowerCase().contains("text:")){
-                                if(getPreferenceI(serviceReference.get().getContext(), "local") == 1)
-                                    serviceReference.get().tts.speak(s.replace("text:", ""), TextToSpeech.QUEUE_ADD, null, String.valueOf(1));
-                                else {
-                                    Pair<String, Boolean> result = new Pair<>(s.replace("text:", ""), true);
-                                    ActionTask.propertyChangeSupport.firePropertyChange("partialResult",null, result);
-                                }
-                            }
-                            if(s.toLowerCase().contains("loading:")){
-                                Boolean b = Boolean.parseBoolean(s.replace("loading:", ""));
-                                ActionTask.propertyChangeSupport.firePropertyChange("loading",null, b);
-                            }
-                            if(s.toLowerCase().contains("stop:")){
-                                Boolean b = Boolean.parseBoolean(s.replace("stop:", ""));
-                                ActionTask.propertyChangeSupport.firePropertyChange("stop",null, b);
-                            }
-                        }
-                    });
-                    webSocket.setDataCallback(new DataCallback() {
-                        public void onDataAvailable(DataEmitter emitter, ByteBufferList byteBufferList) {
-                            System.out.println("I got some bytes!");
-                            // Handle binary data (WAV file)
-                            byte[] data = new byte[byteBufferList.remaining()];
-                            byteBufferList.get(data);
-                            // note that this data has been read
-                            byteBufferList.recycle();
-                            *//*try {
-                                serviceReference.get().porcupineManager.stop();
-                            } catch (PorcupineManagerException e) {
-                               throw new RuntimeException(e);
-                            }*//*
-                            if(FileTypeChecker.isMp4(data)){
-                                try{
-                                    StaticVideoPopup.showVideoPopup(data);
-                                }catch (Exception e){
-                                    e.printStackTrace();
-                                    StaticVideoPopup = new VideoPopup(serviceReference.get().getContext());
-                                    StaticVideoPopup.showVideoPopup(data);
-                                }
-                            }
-                            else if(FileTypeChecker.isWav(data)){
-                                playWavAudio(data);
-                            }
-                            else if(FileTypeChecker.isImage(data)){
-                                imagePopup.showImagePopup(data);
-                            }
-                           *//* try {
-                                new android.os.Handler(Looper.getMainLooper()).postDelayed(
-                                        () -> serviceReference.get().porcupineManager.start(),2000);
-                            } catch (Exception e) {
-                                throw e;
-                            }*//*
-                        }
-                    });
-                    // Handle WebSocket closure
-                    webSocket.setClosedCallback(new CompletedCallback() {
-                        @Override
-                        public void onCompleted(Exception ex) {
-                            if (ex != null) {
-                                Log.e(TAG, "WebSocket closed with error", ex);
-                            } else {
-                                Log.d(TAG, "WebSocket closed successfully");
-                            }
-                            scheduleReconnect(serviceReference);
-                        }
-                    });
-
-                    // Handle WebSocket errors
-                    webSocket.setEndCallback(new CompletedCallback() {
-                        @Override
-                        public void onCompleted(Exception ex) {
-                            if (ex != null) {
-                                Log.e(TAG, "WebSocket error", ex);
-                            }
-                            scheduleReconnect(serviceReference);
-                        }
-                    });
-                }
-            });
-
-        }catch(Exception e){
-            e.printStackTrace();
-            scheduleReconnect(serviceReference);
-        }
-
-    }*/
-
     public static void connectToWebSocket(WeakReference<AssistantService> serviceReference) {
         try {
             String jarvisUrl = getPreferenceS(serviceReference.get().getContext(), "serverip");
@@ -905,6 +778,7 @@ public class Tasks {
             try {
                 String text = str[0];
                 text = text.toLowerCase();
+                String diacritics = StringUtils.removeDiacritics(text);
                 Log.i("ActionTask", "data: " + text);
 
                /* if (text.toLowerCase(Locale.ROOT).contains("laura")) {
@@ -948,6 +822,36 @@ public class Tasks {
                 }else if (local == 1 && text.isEmpty()) {
                         //serviceReference.get().tts.speak("Hello Boss !"+serviceReference.get().keyword, TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                         serviceReference.get().tts.speak("Hello Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
+                }
+                else if(local == 1 && diacritics.contains("open ")
+                        || diacritics.contains("close")
+                        || diacritics.contains("ouvre")
+                        || diacritics.contains("ferme")
+                        || diacritics.contains(" on ")
+                        || diacritics.contains(" off ")
+                        || diacritics.contains("allume")
+                        || diacritics.contains("etein")){
+                    SmartLife.UserInfo infos = SmartLife.getInstance(serviceReference.get().getApplicationContext()).getUserInfo();
+                    infos.devices.forEach(new Consumer<SmartLife.Device>() {
+                        @Override
+                        public void accept(SmartLife.Device device) {
+                            String  normalizedDevice = StringUtils.removeDiacritics(device.name.toLowerCase());
+                            if(diacritics.contains(normalizedDevice)){
+                                SmartLife.getInstance(serviceReference.get().getApplicationContext()).toggleDevice(device, new SmartLife.SmartLifeCallback<Boolean>() {
+                                    @Override
+                                    public void onSuccess(Boolean result) {
+                                        serviceReference.get().tts.speak("Okay Boss !", TextToSpeech.QUEUE_ADD, null, String.valueOf(1));
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                });
+
+                            }
+                        }
+                    });
                 }
                 else if (text.contains("hand") || text.contains("main") || text.contains("robot")) {
                     String txt = text.contains("open") || text.contains("clos") || text.contains("ouvr") || text.contains("ferm") ? "value:1" : "mode:" + replaceAny(text, new ArrayList<String>() {
@@ -1084,7 +988,7 @@ public class Tasks {
                     String hotword = getPreferenceS(serviceReference.get().getContext(), "KeywordFileName").split("_")[0].toLowerCase();
                     String[] model = getPreferenceS(serviceReference.get().getContext(), "ModelFileName").split("-");
                     String lang = model[model.length-1];
-                    String prompt = "<start_of_turn>user\nYou are " + hotword +" and answer in "+ lang +" with small sentences and natural language thanks.<end_of_turn>\n<start_of_turn>user\n"+text+"<end_of_turn>\n";
+                    String prompt = "<start_of_turn>user\nYou are " + hotword +" and answer in "+ lang +" with small sentences and natural language thanks like a polyglot.<end_of_turn>\n<start_of_turn>user\n"+text+"<end_of_turn>\n";
                     LLM.getInstance(serviceReference.get().getContext(), null).generateResponse(prompt);
                 }
 

@@ -24,10 +24,10 @@ public class LLM {
     private LLM(Context context, OutputHandler.ProgressListener listener) {
         LlmInferenceOptions options = LlmInferenceOptions.builder()
                 .setModelPath(MODEL_PATH)
-                .setMaxTokens(2048)
+                .setMaxTokens(1024)
                 .setTopK(50)
                 .setRandomSeed(1234)
-                .setTemperature(0.1f)
+                .setTemperature(0.8f)
                 .setResultListener((partialResult, done) -> {
                     String resultFormatted = partialResult.replace("*", "");
                     Pair<String, Boolean> result = new Pair<>(resultFormatted, done);

@@ -4,7 +4,6 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +23,7 @@ import android.speech.tts.Voice;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
@@ -32,6 +32,8 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.assistant.main.helpers.AudioStreamer;
 import com.assistant.main.helpers.Beeper;
+import com.assistant.main.helpers.BluetoothScoManager;
+import com.assistant.main.helpers.SmartLife;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -44,8 +46,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import ai.picovoice.porcupinemanager.PorcupineManager;
 import ai.picovoice.porcupinemanager.PorcupineManagerException;
@@ -62,6 +66,10 @@ public class AssistantService extends android.app.Service implements Recognition
     public String keyword = null;
     public String modelFileName = null;
     public Beeper beeper = null;
+
+    public BluetoothScoManager.ScoState previousState = null;
+    public BluetoothScoManager.ScoConnectionListener scoListener;
+    public BluetoothScoManager bluetoothScoManager;
 
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -101,6 +109,73 @@ public class AssistantService extends android.app.Service implements Recognition
         });
         return tts;
     }
+
+    public PorcupineManager PorcupineManagerFactory(String modelFilePath, String keywordFilePath, float sensitivity) throws PorcupineManagerException {
+        return new PorcupineManager(
+                modelFilePath,
+                keywordFilePath,
+                sensitivity,
+                (keywordIndex) -> {
+                    new android.os.Handler(Looper.getMainLooper()).post(
+                            () -> {
+                                try{
+                                    try{
+                                        Tasks.SendPreferencesJson(getApplicationContext(),"stop");
+                                        Tasks.RemoveAudioTracks();
+                                        Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
+                                        Tasks.StaticVideoPopup.dismissPopup();
+                                    }catch(Exception e ){
+                                        e.printStackTrace();
+                                        //Toast(e.getMessage());
+                                    }
+
+                                    int whisper = getPreferenceI("whisper");
+                                    int local = getPreferenceI("local");
+                                    if(whisper == 0 || local == 1)
+                                        new Tasks.RecognizeTask(this).execute();
+                                    else{
+                                        AudioStreamer audioStreamer = new AudioStreamer();
+
+                                        audioStreamer.addOnJsonMessageListener(json -> {
+                                            try{
+                                                // React to incoming JSON
+                                                Log.d("ClientActivity", "JSON received: " + json.toString());
+                                                JSONArray lines = json.getJSONArray("lines");
+                                                String bufferTranscription = json.getString("buffer_transcription");
+                                                JSONObject line = lines.getJSONObject(0);
+                                                String text = line.getString("text");
+                                                Log.d("ClientActivity", "JSON received: " + text);
+                                                if(!text.isEmpty() && bufferTranscription.isEmpty()){
+                                                    Tasks.ActionTask.Task.doInBackground(text);
+                                                    audioStreamer.stopStreaming();
+                                                    stopService(new Intent(getContext(), FloatingWindowService.class));
+                                                }
+                                            }catch (Exception e){
+                                                e.printStackTrace();
+                                            }
+                                        });
+                                        String serverUrl = getPreferenceS("serverip");
+                                        String split = serverUrl.split("-")[1];
+                                        String domain = split.split("\\.")[0];
+                                        audioStreamer.startStreaming(domain);
+                                    }
+
+                                    if(!mediaPlayer.isPlaying())
+                                        mediaPlayer.start();
+                                    if(Settings.canDrawOverlays(getApplicationContext())){
+                                        if(!Tasks.isMyServiceRunning(getContext(), FloatingWindowService.class))
+                                            startService(new Intent(getApplicationContext(), FloatingWindowService.class));
+                                    }
+                                }catch(Exception e){
+                                    Log.e("assistant porcupine", e.getMessage());
+                                    Toast(e.getMessage());
+                                }
+                            });
+
+                });
+    }
+
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -148,64 +223,80 @@ public class AssistantService extends android.app.Service implements Recognition
                 Camera.startBackgroundThread();
                 Camera.openCamera();
             }*/
-            try {
-                porcupineManager = new PorcupineManager(
-                        modelFilePath,
-                        keywordFilePath,
-                        0.7f,
-                        (keywordIndex) -> {
-                            new android.os.Handler(Looper.getMainLooper()).post(
-                                    () -> {
-                                        try{
-                                            Tasks.SendPreferencesJson(getApplicationContext(),"stop");
-                                            Tasks.RemoveAudioTracks();
-                                            Tasks.StaticVideoPopup.videoQueue.removeAll(Tasks.StaticVideoPopup.videoQueue);
-                                            Tasks.StaticVideoPopup.dismissPopup();
-                                            int whisper = getPreferenceI("whisper");
-                                            int local = getPreferenceI("local");
-                                            if(whisper == 0 || local == 1)
-                                                new Tasks.RecognizeTask(this).execute();
-                                            else{
-                                                AudioStreamer audioStreamer = new AudioStreamer();
 
-                                                audioStreamer.addOnJsonMessageListener(json -> {
-                                                    try{
-                                                        // React to incoming JSON
-                                                        Log.d("ClientActivity", "JSON received: " + json.toString());
-                                                        JSONArray lines = json.getJSONArray("lines");
-                                                        JSONObject line = lines.getJSONObject(0);
-                                                        String text = line.getString("text");
-                                                        Log.d("ClientActivity", "JSON received: " + text);
-                                                        if(!text.isEmpty()){
-                                                            Tasks.ActionTask.Task.doInBackground(text);
-                                                            audioStreamer.stopStreaming();
-                                                            stopService(new Intent(getContext(), FloatingWindowService.class));
-                                                        }
-                                                    }catch (Exception e){
-                                                        e.printStackTrace();
-                                                    }
-                                                });
-                                                String serverUrl = getPreferenceS("serverip");
-                                                String split = serverUrl.split("-")[1];
-                                                String domain = split.split("\\.")[0];
-                                                audioStreamer.startStreaming(domain);
-                                            }
+            try{
 
-                                            if(!mediaPlayer.isPlaying())
-                                                mediaPlayer.start();
-                                            if(Settings.canDrawOverlays(getApplicationContext())){
-                                                if(!Tasks.isMyServiceRunning(getContext(), FloatingWindowService.class))
-                                                    startService(new Intent(getApplicationContext(), FloatingWindowService.class));
-                                            }
-                                        }catch(Exception e){
-                                            Log.e("assistant porcupine", e.getMessage());
-                                        }
-                                    });
+                BluetoothScoManager.ScoConnectionListener scoListener = new BluetoothScoManager.ScoConnectionListener() {
+                    @Override
+                    public void onScoStateChanged(@NonNull BluetoothScoManager.ScoState newState) {
+                        try {
+                            if (newState == BluetoothScoManager.ScoState.CONNECTED) {
+                                Toast("Bluetooth Headset CONNECTED!");
+                                if(porcupineManager != null)
+                                    porcupineManager.stop();
+                                porcupineManager = PorcupineManagerFactory(modelFilePath, keywordFilePath, 0.7f);
+                                porcupineManager.start();
+                            }
+                            else if(newState == BluetoothScoManager.ScoState.DISCONNECTED
+                                    && previousState != BluetoothScoManager.ScoState.DISCONNECTED
+                                    && previousState != BluetoothScoManager.ScoState.CONNECTING){
+                                Toast("Bluetooth Headset DISCONNECTED!");
+                                if(porcupineManager != null)
+                                    porcupineManager.stop();
+                                porcupineManager = PorcupineManagerFactory(modelFilePath, keywordFilePath, 0.7f);
+                                porcupineManager.start();
+                            }
+                            previousState = newState;
+                        }catch (Exception e){
+                            e.printStackTrace();
+                            Toast(e.getMessage());
+                        }
+                    }
+                    @Override
+                    public void onError(@NonNull String errorMessage) {
+                        Toast("Error: " + errorMessage);
+                    }
+                };
+                BluetoothScoManager bluetoothScoManager = BluetoothScoManager.getInstance(this);
+                bluetoothScoManager.setListener(scoListener);
+                bluetoothScoManager.start();
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+            try{
+                SmartLife smartLife = SmartLife.getInstance(getApplicationContext());
+                smartLife.login(BuildConfig.SMARTLIFE_USER, BuildConfig.SMARTLIFE_PWD, BuildConfig.SMARTLIFE_REGION, new SmartLife.SmartLifeCallback<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean result) {
+                        smartLife.getDeviceList(new SmartLife.SmartLifeCallback<List<SmartLife.Device>>() {
+                            @Override
+                            public void onSuccess(List<SmartLife.Device> result) {
+                                result.forEach(new Consumer<SmartLife.Device>() {
+                                    @Override
+                                    public void accept(SmartLife.Device device) {
+                                        System.out.println(device.name);
+                                    }
+                                });
+                            }
 
+                            @Override
+                            public void onFailure(Exception e) {
+                                e.printStackTrace();
+                            }
                         });
+                    }
 
-                porcupineManager.start();
+                    @Override
+                    public void onFailure(Exception e) {
+                        e.printStackTrace();
+                    }
+                });
 
+            }catch(Exception e ){
+                e.printStackTrace();
+            }
+
+            try {
                 //ConnectivityViewModel vm = new ConnectivityViewModel(getApplication());
 
               /*  vm.getConnected().observe((LifecycleOwner) this, connected -> {
@@ -286,10 +377,8 @@ public class AssistantService extends android.app.Service implements Recognition
                         }
                     }
                 });
-            } catch (PorcupineManagerException e) {
-                Log.e("ASSISTANT_SERVICE", e.toString());
             }catch (Exception e){
-                Log.e("ASSISTANT_SERVICE_CAMERA", e.toString());
+                Log.e("ASSISTANT_SERVICE", e.toString());
             }
             return super.onStartCommand(intent, flags, startId);
 
