@@ -241,7 +241,8 @@ public class AssistantService extends android.app.Service implements Recognition
                             else if(newState == BluetoothScoManager.ScoState.DISCONNECTED
                                     && previousState != BluetoothScoManager.ScoState.DISCONNECTED
                                     && previousState != BluetoothScoManager.ScoState.CONNECTING){
-                                Toast("Bluetooth Headset DISCONNECTED!");
+                                if(previousState != null)
+                                    Toast("Bluetooth Headset DISCONNECTED!");
                                 if(porcupineManager != null)
                                     porcupineManager.stop();
                                 porcupineManager = PorcupineManagerFactory(modelFilePath, keywordFilePath, 0.7f);
