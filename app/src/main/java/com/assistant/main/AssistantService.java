@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -379,6 +380,8 @@ public class AssistantService extends android.app.Service implements Recognition
                 });
             }catch (Exception e){
                 Log.e("ASSISTANT_SERVICE", e.toString());
+            }catch (Exception e){
+                Log.e("ASSISTANT_SERVICE_CAMERA", e.toString());
             }
             return super.onStartCommand(intent, flags, startId);
 
