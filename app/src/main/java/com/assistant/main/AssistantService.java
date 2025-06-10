@@ -380,8 +380,6 @@ public class AssistantService extends android.app.Service implements Recognition
                 });
             }catch (Exception e){
                 Log.e("ASSISTANT_SERVICE", e.toString());
-            }catch (Exception e){
-                Log.e("ASSISTANT_SERVICE_CAMERA", e.toString());
             }
             return super.onStartCommand(intent, flags, startId);
 
