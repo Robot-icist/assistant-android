@@ -255,11 +255,12 @@ public class Tasks {
             this.bytesPerSample = bytesPerSample;
         }
     }
-    private static Boolean stopPlayback = false;
+
+    public static Boolean StopPlayback = false;
+    public static Boolean PausePlayback = false;
+    public static Boolean SkipPlayback = false;
     private static final Object playbackLock = new Object();
-
     public static List<AudioTrack> AudioTracks = new ArrayList<>();
-
     public static Boolean Playing = false;
 
     public static void RemoveAudioTracks (){
@@ -267,82 +268,111 @@ public class Tasks {
             audioTrack.release();
         });
         AudioTracks.removeAll(AudioTracks);
-        stopPlayback = true;
+        StopPlayback = true;
+        PausePlayback = true;
+        Playing = false;
         new Handler().postDelayed(() -> {
-            stopPlayback = false;
+            StopPlayback = false;
+            PausePlayback = false;
+            SkipPlayback = false;
         }, 2000);
     };
 
     private static void playWavAudio(final byte[] wavData) {
-        new Thread(() -> {
-            synchronized (playbackLock) { // Ensure only one playback at a time
-                if(stopPlayback) {
-                    return;
-                }
-                try {
-                    // Extract WAV file properties from the header
-                    WavFileProperties wavProperties = extractWavProperties(wavData);
+        if(StopPlayback) {
+            return;
+        }
+        try {
+            // Extract WAV file properties from the header
+            WavFileProperties wavProperties = extractWavProperties(wavData);
 
-                    if (wavProperties == null) {
-                        throw new IllegalArgumentException("Invalid WAV file");
-                    }
-
-                    // Create an AudioTrack for playing WAV audio
-                    AudioTrack audioTrack = new AudioTrack(
-                            AudioManager.STREAM_MUSIC,
-                            wavProperties.sampleRate, // Sample rate
-                            wavProperties.channelConfig, // Channel configuration
-                            wavProperties.audioFormat, // Audio format (PCM 8-bit or 16-bit)
-                            wavProperties.dataLength, // Buffer size (data length in bytes)
-                            AudioTrack.MODE_STATIC
-                    );
-
-                    // Write WAV data (skipping the header) to the AudioTrack buffer
-                    audioTrack.write(wavData, wavProperties.dataOffset, wavProperties.dataLength);
-
-                    // Set the playback listener to detect when playback finishes
-                    audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
-                        @Override
-                        public void onMarkerReached(AudioTrack track) {
-                            // Marker reached (audio finished)
-                            track.release();
-                            AudioTracks.remove(track);
-                            Playing = false;
-                            ActionTask.propertyChangeSupport.firePropertyChange("stop",null, true);
-                        }
-
-                        @Override
-                        public void onPeriodicNotification(AudioTrack track) {
-                            // Optionally handle periodic notifications, but not needed here
-                        }
-                    });
-                    AudioTracks.add(audioTrack);
-
-                    ActionTask.propertyChangeSupport.firePropertyChange("stop",null, false);
-                    // Start playback
-                    audioTrack.play();
-                    Playing = true;
-                    // Calculate the correct position for the notification marker
-                    int totalFrames = wavProperties.dataLength / wavProperties.bytesPerSample * 8;
-
-                    // Set the notification marker to the position of the last frame
-                    audioTrack.setNotificationMarkerPosition(totalFrames);
-
-                    // Wait for playback to finish without blocking the thread
-                    while (audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
-                        // Simply wait until playback completes. The callback will handle cleanup.
-                        try {
-                            Thread.sleep(100); // Avoid high CPU usage during wait
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            if (wavProperties == null) {
+                throw new IllegalArgumentException("Invalid WAV file");
             }
-        }).start(); // Start the background thread
+
+            // Create an AudioTrack for playing WAV audio
+            AudioTrack audioTrack = new AudioTrack(
+                    AudioManager.STREAM_MUSIC,
+                    wavProperties.sampleRate, // Sample rate
+                    wavProperties.channelConfig, // Channel configuration
+                    wavProperties.audioFormat, // Audio format (PCM 8-bit or 16-bit)
+                    wavProperties.dataLength, // Buffer size (data length in bytes)
+                    AudioTrack.MODE_STATIC
+            );
+
+            // Write WAV data (skipping the header) to the AudioTrack buffer
+            audioTrack.write(wavData, wavProperties.dataOffset, wavProperties.dataLength);
+
+            // Set the playback listener to detect when playback finishes
+            audioTrack.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+                @Override
+                public void onMarkerReached(AudioTrack track) {
+                    // Marker reached (audio finished)
+                    track.release();
+                    AudioTracks.remove(track);
+                    Playing = false;
+                    if(AudioTracks.size() == 0)
+                        ActionTask.propertyChangeSupport.firePropertyChange("stop",null, true);
+                }
+
+                @Override
+                public void onPeriodicNotification(AudioTrack track) {
+                    // Optionally handle periodic notifications, but not needed here
+                }
+            });
+            // Calculate the correct position for the notification marker
+            int totalFrames = wavProperties.dataLength / wavProperties.bytesPerSample * 8;
+
+            // Set the notification marker to the position of the last frame
+            audioTrack.setNotificationMarkerPosition(totalFrames);
+
+            float maxVolume = AudioTrack.getMaxVolume();
+            float minVolume = AudioTrack.getMinVolume();
+//            audioTrack.setVolume();
+
+            AudioTracks.add(audioTrack);
+
+            new Thread(() -> {
+                synchronized (playbackLock) { // Ensure only one playback at a time
+                    try{
+                        if(StopPlayback)
+                            return;
+                        ActionTask.propertyChangeSupport.firePropertyChange("stop",null, false);
+                        // Start playback
+                        audioTrack.play();
+                        Playing = true;
+                        // Wait for playback to finish without blocking the thread
+                        while (audioTrack.getPlayState() != AudioTrack.PLAYSTATE_STOPPED && !StopPlayback) {
+                            // Simply wait until playback completes. The callback will handle cleanup.
+                            if(SkipPlayback){
+                                audioTrack.pause();
+                                audioTrack.stop();
+                                audioTrack.flush();
+                                audioTrack.release();
+                                AudioTracks.remove(audioTrack);
+                                SkipPlayback = false;
+                                ActionTask.propertyChangeSupport.firePropertyChange("stop",null, AudioTracks.size() == 0);
+                                return;
+                            }
+                            else if(PausePlayback)
+                                audioTrack.pause();
+                            else if(!PausePlayback && audioTrack.getPlayState() == AudioTrack.PLAYSTATE_PAUSED)
+                                audioTrack.play();
+
+                            Thread.sleep(100); // Avoid high CPU usage during wait
+                            ActionTask.propertyChangeSupport.firePropertyChange("stop",null, false);
+                        }
+                    }catch (Exception e){
+                        new Handler(Looper.getMainLooper()).post(()->{
+                            ActionTask.serviceReference.get().Toast(e.getMessage());
+                        });
+                    }
+                }
+            }).start(); // Start the background thread
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -823,12 +853,12 @@ public class Tasks {
                         //serviceReference.get().tts.speak("Hello Boss !"+serviceReference.get().keyword, TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                         serviceReference.get().tts.speak("Hello Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                 }
-                else if(local == 1 && diacritics.contains("open ")
+                else if(local == 1 && diacritics.contains("open")
                         || diacritics.contains("close")
                         || diacritics.contains("ouvre")
                         || diacritics.contains("ferme")
-                        || diacritics.contains(" on ")
-                        || diacritics.contains(" off ")
+                        || diacritics.contains("turn on")
+                        || diacritics.contains("turn off")
                         || diacritics.contains("allume")
                         || diacritics.contains("etein")){
                     SmartLife.UserInfo infos = SmartLife.getInstance(serviceReference.get().getApplicationContext()).getUserInfo();
@@ -840,7 +870,7 @@ public class Tasks {
                                 SmartLife.getInstance(serviceReference.get().getApplicationContext()).toggleDevice(device, new SmartLife.SmartLifeCallback<Boolean>() {
                                     @Override
                                     public void onSuccess(Boolean result) {
-                                        serviceReference.get().tts.speak("Okay Boss !", TextToSpeech.QUEUE_ADD, null, String.valueOf(1));
+                                        serviceReference.get().tts.speak("Okay Boss !", TextToSpeech.QUEUE_FLUSH, null, String.valueOf(1));
                                     }
 
                                     @Override
@@ -848,7 +878,6 @@ public class Tasks {
                                         e.printStackTrace();
                                     }
                                 });
-
                             }
                         }
                     });

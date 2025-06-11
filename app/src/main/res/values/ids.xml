@@ -9,6 +9,9 @@
     <item name="model_spinner" type="id" />
     <item name="model_spinner_label" type="id" />
     <item name="reload" type="id" />
+    <item name="play" type="id" />
+    <item name="skip" type="id" />
+    <item name="pause" type="id" />
     <item name="stop" type="id" />
     <item name="kill" type="id" />
     <item name="texture" type="id" />
@@ -19,6 +22,7 @@
     <item name="enrollCb" type="id"/>
     <item name="bluetoothCb" type="id"/>
     <item name="localCb" type="id"/>
+    <item name="alwaysOnCb" type="id"/>
     <item name="videoCb" type="id"/>
     <item name="googleCb" type="id"/>
     <item name="loader" type="id"/>
@@ -26,6 +30,7 @@
     <item name="ip" type="id"/>
     <item name="plus" type="id"/>
     <item name="btns" type="id"/>
+    <item name="textInput" type="id"/>
     <item name="text" type="id"/>
     <item name="server" type="id"/>
     <item name="speaker" type="id"/>

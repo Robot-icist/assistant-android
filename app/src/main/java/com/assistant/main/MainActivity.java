@@ -103,6 +103,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import okhttp3.internal.concurrent.Task;
+
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
     static {
@@ -154,6 +156,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private CheckBox enrollCb;
     private CheckBox bluetoothCb;
     private CheckBox localCb;
+    private CheckBox alwaysOnCb;
     private CheckBox whisperCb;
     private CheckBox keepinMemoryCb;
     private CheckBox videoCb;
@@ -243,6 +246,34 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
             });
 
+            findViewById(R.id.play).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                     Tasks.PausePlayback = false;
+                     findViewById(R.id.pause).setVisibility(View.VISIBLE);
+                     findViewById(R.id.play).setVisibility(View.GONE);
+                }
+            });
+
+            findViewById(R.id.pause).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                   //pause
+                    Tasks.PausePlayback = true;
+                    findViewById(R.id.pause).setVisibility(View.GONE);
+                    findViewById(R.id.play).setVisibility(View.VISIBLE);
+                }
+            });
+
+            findViewById(R.id.skip).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //skip one track or play if paused
+                    Tasks.SkipPlayback = true;
+                    findViewById(R.id.skip).setVisibility(Tasks.AudioTracks.size() > 1 ? View.VISIBLE : View.GONE);
+                }
+            });
+
             findViewById(R.id.stop).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -254,6 +285,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         findViewById(R.id.stop).setVisibility(View.GONE);
                 }
             });
+
 
             ArrayList<String> permissions = new ArrayList<String>();
             permissions.add(Manifest.permission.INTERNET);
@@ -317,6 +349,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             enrollCb = (CheckBox) findViewById(R.id.enrollCb);
             bluetoothCb = (CheckBox) findViewById(R.id.bluetoothCb);
             localCb = (CheckBox) findViewById(R.id.localCb);
+            alwaysOnCb = (CheckBox) findViewById(R.id.alwaysOnCb);
             whisperCb = (CheckBox) findViewById(R.id.whisperCb);
             keepinMemoryCb = (CheckBox) findViewById(R.id.keepInMemoryCb);
             videoCb = (CheckBox) findViewById(R.id.videoCb);
@@ -365,6 +398,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         });
                         anim.start();
                     }
+                }
+            });
+
+            alwaysOnCb.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    setPreferenceI("alwaysOn", isChecked ? 1 : 0);
                 }
             });
 
@@ -440,6 +480,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     try {
                         Tasks.ActionTask.Task.doInBackground(text.getText().toString());
                         resultView.append("\nuser:\n"+text.getText().toString()+"\n");
+                        resultView.computeScroll();
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -529,6 +570,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             @Override
             public void run() {
                 resultView.append(partialResult.toString());
+                resultView.computeScroll();
             }
         });
     });
@@ -539,6 +581,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 Pair<String, Boolean> result = (Pair<String, Boolean>) evt.getNewValue();
                 String partialText = result.first;
                 resultView.append(partialText);
+                resultView.computeScroll();
             }
         });
 
@@ -551,13 +594,21 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             public void run() {
                 Boolean result = (Boolean) evt.getNewValue();
                 if(result){
+                    findViewById(R.id.textInput).setVisibility(View.GONE);
+
                     loader.setVisibility(View.VISIBLE);
                     findViewById(R.id.stop).setVisibility(View.VISIBLE);
                 }
                 else{
+                    findViewById(R.id.textInput).setVisibility(View.VISIBLE);
+
                     loader.setVisibility(View.GONE);
-                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing)
+                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing){
+                        findViewById(R.id.play).setVisibility(View.GONE);
+                        findViewById(R.id.pause).setVisibility(View.GONE);
+                        findViewById(R.id.skip).setVisibility(View.GONE);
                         findViewById(R.id.stop).setVisibility(View.GONE);
+                    }
                 }
             }
         });
@@ -569,11 +620,31 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             public void run() {
                 Boolean result = (Boolean) evt.getNewValue();
                 if(result){
-                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing && loader.getVisibility() == View.GONE)
+                    if(Tasks.AudioTracks.size() == 0 && !Tasks.Playing && loader.getVisibility() == View.GONE){
+                        findViewById(R.id.textInput).setVisibility(View.VISIBLE);
+
+                        findViewById(R.id.play).setVisibility(View.GONE);
+                        findViewById(R.id.pause).setVisibility(View.GONE);
+                        findViewById(R.id.skip).setVisibility(View.GONE);
                         findViewById(R.id.stop).setVisibility(View.GONE);
+                    }
                 }
                 else{
+                    findViewById(R.id.textInput).setVisibility(View.GONE);
+
+                    if(Tasks.Playing || Tasks.PausePlayback)
                         findViewById(R.id.stop).setVisibility(View.VISIBLE);
+
+
+                    if(Tasks.Playing){
+                        findViewById(R.id.play).setVisibility(View.GONE);
+                        findViewById(R.id.pause).setVisibility(View.VISIBLE);
+                        if(Tasks.AudioTracks.size() > 1)
+                            findViewById(R.id.skip).setVisibility(View.VISIBLE);
+                    }if(Tasks.PausePlayback){
+                        findViewById(R.id.play).setVisibility(View.VISIBLE);
+                        findViewById(R.id.pause).setVisibility(View.GONE);
+                    }
                 }
             }
         });
@@ -895,6 +966,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             int tempSetEnroll = getPreferenceI("enroll");
             int tempSetBluetooth = getPreferenceI("SetBluetooth");
             int tempSetLocal = getPreferenceI("local");
+            int tempSetAlwaysOn = getPreferenceI("alwaysOn");
             int tempSetWhisper = getPreferenceI("whisper");
             int tempSetVideo = getPreferenceI("video");
             int tempSetGoogle = getPreferenceI("google");
@@ -913,6 +985,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             enrollCb.setChecked(tempSetEnroll == 1);
             bluetoothCb.setChecked(tempSetBluetooth == 1);
             localCb.setChecked(tempSetLocal == 1);
+            alwaysOnCb.setChecked(tempSetAlwaysOn == 1);
             whisperCb.setChecked(tempSetWhisper == 1);
             videoCb.setChecked(tempSetVideo == 1);
             googleCb.setChecked(tempSetGoogle == 1);
@@ -923,6 +996,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             setPreferenceI("enroll", tempSetEnroll);
             setPreferenceI("SetBluetooth", tempSetBluetooth);
             setPreferenceI("local", tempSetLocal);
+            setPreferenceI("alwaysOn", tempSetAlwaysOn);
             setPreferenceI("whisper", tempSetWhisper);
             setPreferenceI("video", tempSetVideo);
             setPreferenceI("google", tempSetGoogle);
@@ -1070,6 +1144,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onResult(String hypothesis) {
         resultView.append(hypothesis + "\n");
+        resultView.computeScroll();
         JSONObject reader = null;
         try {
             reader = new JSONObject(hypothesis);
@@ -1087,6 +1162,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onPartialResult(String hypothesis) {
         resultView.append(hypothesis + "\n");
+        resultView.computeScroll();
     }
 
     @Override
@@ -1290,6 +1366,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                                 resultView.append("\nbuffer_transcription:\n"+bufferTranscription);
                             if(!text.isEmpty() && bufferTranscription.isEmpty()){
                                 resultView.append("\nuser:\n"+text+"\n");
+                                resultView.computeScroll();
                                 Tasks.ActionTask.Task.doInBackground(text);
                                 audioStreamer.stopStreaming();
                                 stopService(new Intent(getApplicationContext(), FloatingWindowService.class));

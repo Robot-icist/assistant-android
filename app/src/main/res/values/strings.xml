@@ -47,6 +47,9 @@
     <string name="llm_model_label">LLM Models</string>
     <string name="reload"> 🔁 Reload</string>
     <string name="kill"> 🛑 Kill</string>
+    <string name="play">[  ▶︎  ]</string>
+    <string name="skip"> ▶▶ </string>
+    <string name="pause"> ▐▐  </string>
     <string name="stop"> ⬜ </string>
     <string name="train"> 🥷 Train</string>
     <string name="local">Local</string>
@@ -60,4 +63,5 @@
     <string name="D3">3D</string>
     <string name="keepInMemory">KeepInMemory</string>
     <string name="whisper">Whisper</string>
+    <string name="alwaysOn">AlwaysOn</string>
 </resources>
